@@ -1,0 +1,203 @@
+'use client';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import styles from '../../styles/reports.module.css';
+
+function ReportsPage() {
+  const [reportType, setReportType] = useState('orders_by_seller');
+  const [reportData, setReportData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    async function fetchReportData() {
+      setLoading(true);
+      setMessage('');
+      try {
+        const response = await fetch(`/api/reports?type=${reportType}`);
+        if (!response.ok) {
+          throw new Error(`Errore HTTP! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setReportData(data);
+      } catch (err) {
+        console.error('Errore durante il recupero del report:', err);
+        setMessage(`Impossibile caricare il report: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchReportData();
+  }, [reportType]);
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
+  };
+
+  // Raggruppa i dati per venditore
+  const sellers = reportData.reduce((acc, item) => {
+    const sellerKey = item.seller_id;
+    if (!acc[sellerKey]) {
+      acc[sellerKey] = {
+        name: `${item.seller_name} ${item.seller_lastname}`,
+        id: item.seller_id,
+        orders: []
+      };
+    }
+    acc[sellerKey].orders.push(item);
+    return acc;
+  }, {});
+
+  // Raggruppa i dati per cliente
+  const clients = reportData.reduce((acc, item) => {
+    const clientKey = item.client_id;
+    if (!acc[clientKey]) {
+      acc[clientKey] = {
+        name: `${item.client_name} ${item.client_lastname}`,
+        id: item.client_id,
+        orders: []
+      };
+    }
+    acc[clientKey].orders.push(item);
+    return acc;
+  }, {});
+
+   return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h1 className={styles.heading}>Report e Analisi</h1>
+        <Link href="/" className={styles.backButton}>
+          ← Torna alla Home
+        </Link>
+      </div>
+
+      <div className={styles.controls}>
+        <div className={styles.filterGroup}>
+          <label htmlFor="report-select">Seleziona Report:</label>
+          <select
+            id="report-select"
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value)}
+            className={styles.select}
+          >
+            <option value="orders_by_seller">Totale Ordini per Venditore</option>
+            <option value="orders_by_client">Totale Ordini per Cliente</option>
+            <option value="sales_over_time_monthly">Andamento Vendite Mensili</option>
+          </select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className={styles.loading}>
+          <div className={styles.spinner}></div>
+          <p>Caricamento report...</p>
+        </div>
+      ) : message ? (
+        <div className={styles.error}>
+          <p>{message}</p>
+        </div>
+      ) : (
+        <div className={styles.reportContent}>
+          {reportType === 'orders_by_seller' && (
+            <>
+              <h2 className={styles.reportTitle}>Report Ordini per Venditore</h2>
+              {Object.keys(sellers).length > 0 ? (
+                <div className={styles.reportGrid}>
+                  {Object.values(sellers).map((seller) => (
+                    <div key={seller.id} className={styles.reportCard}>
+                      <h3 className={styles.cardTitle}>
+                        {seller.name} <span className={styles.idBadge}>ID: {seller.id}</span>
+                      </h3>
+                      <div className={styles.cardContent}>
+                        <div className={styles.metric}>
+                          <span className={styles.metricLabel}>Totale Ordini</span>
+                          <span className={styles.metricValue}>{seller.orders[0].total_orders}</span>
+                        </div>
+                        <div className={styles.metric}>
+                          <span className={styles.metricLabel}>Valore Totale</span>
+                          <span className={styles.metricValue}>
+                            {formatCurrency(seller.orders[0].total_value)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className={styles.noResults}>
+                  <p>Nessun dato disponibile per i venditori</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {reportType === 'orders_by_client' && (
+            <>
+              <h2 className={styles.reportTitle}>Report Ordini per Cliente</h2>
+              {Object.keys(clients).length > 0 ? (
+                <div className={styles.reportGrid}>
+                  {Object.values(clients).map((client) => (
+                    <div key={client.id} className={styles.reportCard}>
+                      <h3 className={styles.cardTitle}>
+                        {client.name} <span className={styles.idBadge}>ID: {client.id}</span>
+                      </h3>
+                      <div className={styles.cardContent}>
+                        <div className={styles.metric}>
+                          <span className={styles.metricLabel}>Totale Ordini</span>
+                          <span className={styles.metricValue}>{client.orders[0].total_orders}</span>
+                        </div>
+                        <div className={styles.metric}>
+                          <span className={styles.metricLabel}>Valore Totale</span>
+                          <span className={styles.metricValue}>
+                            {formatCurrency(client.orders[0].total_value)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className={styles.noResults}>
+                  <p>Nessun dato disponibile per i clienti</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {reportType === 'sales_over_time_monthly' && (
+            <>
+              <h2 className={styles.reportTitle}>Andamento Vendite Mensili</h2>
+              {reportData.length > 0 ? (
+                <div className={styles.reportGrid}>
+                  {reportData.map((item, index) => (
+                    <div key={index} className={styles.reportCard}>
+                      <h3 className={styles.cardTitle}>{item.month}</h3>
+                      <div className={styles.cardContent}>
+                        <div className={styles.metric}>
+                          <span className={styles.metricLabel}>Totale Ordini</span>
+                          <span className={styles.metricValue}>{item.total_orders}</span>
+                        </div>
+                        <div className={styles.metric}>
+                          <span className={styles.metricLabel}>Valore Totale</span>
+                          <span className={styles.metricValue}>
+                            {formatCurrency(item.total_value)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className={styles.noResults}>
+                  <p>Nessun dato disponibile per le vendite mensili</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default ReportsPage;

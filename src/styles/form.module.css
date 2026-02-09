@@ -1,0 +1,231 @@
+.container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  color:#333;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.heading {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.backButton {
+  color: #4a6bdf;
+  text-decoration: none;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background: #f5f7ff;
+  text-decoration: none;
+}
+
+.formSection {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.sectionTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.formGroup {
+  margin-bottom: 1rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.formGroup input,
+.formGroup select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+  transition: all 0.2s ease;
+}
+
+.formGroup input:focus,
+.formGroup select:focus {
+  border-color: #4a6bdf;
+  box-shadow: 0 0 0 3px rgba(74, 107, 223, 0.1);
+  outline: none;
+}
+
+.currencyInput {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currencyInput span {
+  position: absolute;
+  left: 1rem;
+  font-weight: 500;
+  color: #666;
+}
+
+.currencyInput input {
+  padding-left: 2.5rem !important;
+}
+
+.readOnlyField {
+  padding: 0.75rem 1rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  color: #333;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.primaryButton {
+  background-color: #4a6bdf;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primaryButton:hover {
+  background-color: #3a5bcf;
+}
+
+.secondaryButton {
+  background-color: #fff;
+  color: #4a6bdf;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondaryButton:hover {
+  background-color: #f5f7ff;
+}
+
+.successMessage {
+  background: #e6ffed;
+  color: #1f8722;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #a3d8a9;
+}
+
+.errorMessage {
+  background: #fff0f0;
+  color: #d32f2f;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #ffb3b3;
+}
+/* Aggiungi queste regole alle esistenti */
+
+.phoneInputGroup {
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  align-items: center; /* Aggiunto: allinea verticalmente gli elementi */
+}
+
+.phoneInputGroup:focus-within {
+  border-color: #4a6bdf;
+  box-shadow: 0 0 0 3px rgba(74, 107, 223, 0.1);
+}
+
+.phonePrefix {
+  display: flex;
+  align-items: center;
+  background: #f5f7ff;
+  padding: 0 0.75rem; /* Ridotto il padding orizzontale se necessario */
+  border-right: 1px solid #ddd;
+  gap: 0.5rem; /* Aggiunto: spazio tra bandiera e select */
+}
+
+.phonePrefix select { /* Modificato da .phonePrefixSelect a .phonePrefix select per maggiore specificità */
+  border: none;
+  background: transparent;
+  padding: 0.75rem 0; /* Rimosso padding orizzontale qui per evitare doppio padding con il gap */
+  font-size: 1rem;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none; /* Rimuove lo stile predefinito della freccia su Chrome/Safari */
+  -moz-appearance: none;    /* Rimuove lo stile predefinito della freccia su Firefox */
+  appearance: none;         /* Rimuove lo stile predefinito della freccia */
+  padding-right: 1.5rem; /* Aggiunge spazio per una freccia personalizzata se vuoi aggiungerla */
+  background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M4.94%206.56l2.12%202.12%202.12-2.12-1.06-1.06-1.06%201.06-1.06-1.06z%22%2F%3E%3C%2Fsvg%3E'); /* Freccia SVG */
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 0.8em;
+}
+
+
+.phoneNumberInput {
+  flex: 1;
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  min-width: 0;
+  background-color: #fff; /* Assicurati che abbia uno sfondo bianco */
+}
+
+.inputError {
+  color: #d32f2f;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
