@@ -1,4 +1,4 @@
-import { openDb } from './db';
+import { openDb } from "./db";
 
 async function setupDatabase() {
   const db = await openDb();
@@ -11,21 +11,33 @@ async function setupDatabase() {
     )
   `);
 
-await db.exec(`
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS ordini (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       venditore_id INTEGER NOT NULL,
       data_ordine TEXT NOT NULL,
-      totale REAL NOT NULL,
+      costo REAL NOT NULL,
       FOREIGN KEY (venditore_id) REFERENCES venditori(id)
     )
   `);
 
-  console.log('Tabella "ordini" creata (o verificata).');
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS magazzino (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      macro_categoria TEXT NOT NULL,
+      tipo_pezzo TEXT NOT NULL,
+      quantita INTEGER NOT NULL DEFAULT 0,
+      unita TEXT NOT NULL DEFAULT 'pz',
+      riferimento_lavoro TEXT,
+      data_inserimento TEXT NOT NULL DEFAULT (datetime('now')),
+      CHECK (macro_categoria IN ('armadio','cucina')),
+      CHECK (quantita >= 0)
+    )
+  `);
 
+  console.log('Tabelle create/verificate: venditori, ordini, magazzino.');
 
   await db.close();
-  console.log('Tabelle "venditori" e "ordini" create (se non esistevano).');
 }
 
 export { setupDatabase };

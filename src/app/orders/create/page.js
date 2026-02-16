@@ -1,233 +1,385 @@
-'use client';
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import styles from '../../../styles/form.module.css';
+"use client";
 
-function CreateOrderForm() {
+import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import styles from "../../../styles/form.module.css";
+
+export default function CreateOrderForm() {
   const [venditori, setVenditori] = useState([]);
   const [clienti, setClienti] = useState([]);
-  const [venditoreId, setVenditoreId] = useState('');
-  const [clienteId, setClienteId] = useState('');
-  const [dataOrdine, setDataOrdine] = useState('');
-  const [totale, setTotale] = useState('');
-  const [numeroColli, setNumeroColli] = useState('');
-  // Rimosso lo stato 'destinazione' dal form, non sarà più un input diretto
-  const [message, setMessage] = useState('');
 
-  // Stato per memorizzare l'indirizzo del cliente selezionato, che diventerà la destinazione
-  const [destinazioneAutomatica, setDestinazioneAutomatica] = useState('');
+  const [venditoreId, setVenditoreId] = useState("");
+  const [clienteId, setClienteId] = useState("");
+
+  const [dataOrdine, setDataOrdine] = useState("");
+  const [costo, setCosto] = useState("");
+  const [preventivo, setPreventivo] = useState(""); // <-- nuovo
+  const [numeroColli, setNumeroColli] = useState("");
+
+  const [destinazioneAutomatica, setDestinazioneAutomatica] = useState("");
+  const [message, setMessage] = useState("");
+
+  const [disegnoFile, setDisegnoFile] = useState(null); // <-- nuovo
 
   useEffect(() => {
+    let active = true;
+
     async function fetchData() {
-      setMessage('');
+      setMessage("");
 
       try {
         const [sellersResponse, clientsResponse] = await Promise.all([
-          fetch('/api/sellers'),
-          fetch('/api/clients')
+          fetch("/api/sellers"),
+          fetch("/api/clients"),
         ]);
 
-        if (!sellersResponse.ok) throw new Error(`Errore HTTP venditori! status: ${sellersResponse.status}`);
-        if (!clientsResponse.ok) throw new Error(`Errore HTTP clienti! status: ${clientsResponse.status}`);
+        if (!sellersResponse.ok) {
+          throw new Error(
+            `Errore HTTP venditori! status: ${sellersResponse.status}`
+          );
+        }
+        if (!clientsResponse.ok) {
+          throw new Error(`Errore HTTP clienti! status: ${clientsResponse.status}`);
+        }
 
         const sellersData = await sellersResponse.json();
         const clientsData = await clientsResponse.json();
 
-        setVenditori(sellersData);
-        setClienti(clientsData);
-
+        if (!active) return;
+        setVenditori(Array.isArray(sellersData) ? sellersData : []);
+        setClienti(Array.isArray(clientsData) ? clientsData : []);
       } catch (error) {
-        console.error('Errore nel caricamento dati:', error);
-        setMessage(`Errore nel caricamento dei dati: ${error.message}`);
+        console.error("Errore nel caricamento dati:", error);
+        if (!active) return;
+        setMessage(
+          `Errore nel caricamento dei dati: ${error?.message || "Errore sconosciuto"}`
+        );
       }
     }
+
     fetchData();
+    return () => {
+      active = false;
+    };
   }, []);
 
-  // Questo useEffect si attiva ogni volta che 'clienteId' o 'clienti' cambiano
-  // e aggiorna la 'destinazioneAutomatica'
+  const selectedClient = useMemo(() => {
+    if (!clienteId) return null;
+    const id = Number(clienteId);
+    if (Number.isNaN(id)) return null;
+    return clienti.find((c) => c?.id === id) ?? null;
+  }, [clienteId, clienti]);
+
   useEffect(() => {
-    if (clienteId) {
-      const client = clienti.find(c => c.id === parseInt(clienteId, 10));
-      if (client && client.indirizzo) { // Assicurati che l'indirizzo esista
-        setDestinazioneAutomatica(client.indirizzo);
-      } else {
-        setDestinazioneAutomatica('Indirizzo non disponibile per questo cliente');
-      }
-    } else {
-      setDestinazioneAutomatica(''); // Resetta se nessun cliente è selezionato
+    if (!selectedClient) {
+      setDestinazioneAutomatica("");
+      return;
     }
-  }, [clienteId, clienti]); // Dipendenze: clienteId e la lista completa dei clienti
+
+    if (selectedClient.indirizzo) {
+      setDestinazioneAutomatica(selectedClient.indirizzo);
+    } else {
+      setDestinazioneAutomatica("Indirizzo non disponibile per questo cliente");
+    }
+  }, [selectedClient]);
+
+  const resetForm = () => {
+    setVenditoreId("");
+    setClienteId("");
+    setDataOrdine("");
+    setCosto("");
+    setPreventivo("");
+    setNumeroColli("");
+    setDestinazioneAutomatica("");
+    setMessage("");
+    setDisegnoFile(null); // <-- nuovo
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setMessage('');
+    setMessage("");
 
-    // Aggiungiamo una validazione per la destinazione automatica
-    if (!destinazioneAutomatica || destinazioneAutomatica === 'Indirizzo non disponibile per questo cliente') {
-      setMessage('Errore: Seleziona un cliente valido con un indirizzo per la destinazione.');
+    const vendId = Number(venditoreId);
+    const cliId = Number(clienteId);
+    const tot = Number(costo);
+    const colli = Number(numeroColli);
+
+    const prev =
+      preventivo === "" || preventivo === null || preventivo === undefined
+        ? null
+        : Number(preventivo);
+
+    if (!venditoreId || Number.isNaN(vendId)) {
+      setMessage("Errore: Seleziona un venditore valido.");
+      return;
+    }
+    if (!clienteId || Number.isNaN(cliId)) {
+      setMessage("Errore: Seleziona un cliente valido.");
+      return;
+    }
+    if (!dataOrdine) {
+      setMessage("Errore: Seleziona una data ordine valida.");
+      return;
+    }
+    if (Number.isNaN(tot) || tot < 0) {
+      setMessage("Errore: Inserisci un costo valido (>= 0).");
+      return;
+    }
+    if (Number.isNaN(colli) || colli < 0) {
+      setMessage("Errore: Inserisci un numero colli valido (>= 0).");
+      return;
+    }
+    if (prev !== null && (Number.isNaN(prev) || prev < 0)) {
+      setMessage("Errore: Inserisci un preventivo valido (>= 0) oppure lascia vuoto.");
+      return;
+    }
+
+    if (
+      !destinazioneAutomatica ||
+      destinazioneAutomatica === "Indirizzo non disponibile per questo cliente"
+    ) {
+      setMessage(
+        "Errore: Seleziona un cliente valido con un indirizzo per la destinazione."
+      );
       return;
     }
 
     try {
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          venditore_id: parseInt(venditoreId, 10),
-          cliente_id: parseInt(clienteId, 10),
-          data_ordine: dataOrdine,
-          totale: parseFloat(totale),
-          numero_colli: parseInt(numeroColli, 10),
-          destinazione: destinazioneAutomatica, // Invia la destinazione generata automaticamente
-        }),
+      const formData = new FormData();
+      formData.append("venditore_id", String(vendId));
+      formData.append("cliente_id", String(cliId));
+      formData.append("data_ordine", dataOrdine);
+      formData.append("costo", String(tot));
+      formData.append("preventivo", prev === null ? "" : String(prev));
+      formData.append("numero_colli", String(colli));
+      formData.append("destinazione", destinazioneAutomatica);
+
+      if (disegnoFile) {
+        formData.append("disegno", disegnoFile); // File in FormData [web:31]
+      }
+
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        body: formData,
       });
 
       if (response.ok) {
-        setMessage('Ordine creato con successo!');
-        // Resetta tutti i campi del form
-        setVenditoreId('');
-        setClienteId('');
-        setDataOrdine('');
-        setTotale('');
-        setNumeroColli('');
-        setDestinazioneAutomatica(''); // Resetta anche la destinazione automatica
+        setMessage("Ordine creato con successo!");
+        resetForm();
       } else {
-        const errorData = await response.json();
+        let errorData = null;
+        try {
+          errorData = await response.json();
+        } catch {}
         setMessage(
-          `Errore nella creazione dell'ordine: ${errorData.error || "Impossibile creare l'ordine."}`
+          `Errore nella creazione dell'ordine: ${
+            errorData?.error || "Impossibile creare l'ordine."
+          }`
         );
       }
     } catch (error) {
-      setMessage(`Errore di rete: ${error.message}`);
+      setMessage(`Errore di rete: ${error?.message || "Errore sconosciuto"}`);
     }
   };
 
- return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h1 className={styles.heading}>Crea Nuovo Ordine</h1>
-        <Link href="/" className={styles.backButton}>
-          ← Torna alla Home
-        </Link>
-      </div>
+  return (
+    <main className={styles.page}>
+      <header className={styles.topbar}>
+        <div className={styles.topbarInner}>
+          <div>
+            <h1 className={styles.heading}>Crea Nuovo Ordine</h1>
+            <p className={styles.subheading}>
+              Inserisci i dati principali dell’ordine e verifica l’indirizzo di spedizione.
+            </p>
+          </div>
 
-      {message && (
-        <div className={message.startsWith('Errore') ? styles.errorMessage : styles.successMessage}>
-          {message}
+          <Link href="/" className={styles.backButton}>
+            ← Torna alla Home
+          </Link>
         </div>
-      )}
+      </header>
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formSection}>
-          <h2 className={styles.sectionTitle}>Informazioni Base</h2>
-          
-          <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-              <label htmlFor="venditoreId">Venditore</label>
-              <select id="venditoreId" value={venditoreId} onChange={(e) => setVenditoreId(e.target.value)} required>
-                <option value="">Seleziona un venditore</option>
-                {venditori.map((venditore) => (
-                  <option key={venditore.id} value={venditore.id}>
-                    {venditore.nome} {venditore.cognome}
-                  </option>
-                ))}
-              </select>
-            </div>
+      <section className={styles.content}>
+        {message && (
+          <div
+            className={
+              message.startsWith("Errore") ? styles.errorMessage : styles.successMessage
+            }
+          >
+            {message}
+          </div>
+        )}
 
-            <div className={styles.formGroup}>
-              <label htmlFor="clienteId">Cliente</label>
-              <select id="clienteId" value={clienteId} onChange={(e) => setClienteId(e.target.value)} required>
-                <option value="">Seleziona un cliente</option>
-                {clienti.map((cliente) => (
-                  <option key={cliente.id} value={cliente.id}>
-                    {cliente.nome} {cliente.cognome}
-                  </option>
-                ))}
-              </select>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formSection}>
+            <h2 className={styles.sectionTitle}>Informazioni base</h2>
+
+            <div className={styles.formGrid}>
+              <div className={styles.formGroup}>
+                <label htmlFor="venditoreId">Venditore</label>
+                <select
+                  id="venditoreId"
+                  value={venditoreId}
+                  onChange={(e) => setVenditoreId(e.target.value)}
+                  required
+                >
+                  <option value="">Seleziona un venditore</option>
+                  {venditori.map((venditore) => (
+                    <option key={venditore.id} value={venditore.id}>
+                      {venditore.nome} {venditore.cognome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="clienteId">Cliente</label>
+                <select
+                  id="clienteId"
+                  value={clienteId}
+                  onChange={(e) => setClienteId(e.target.value)}
+                  required
+                >
+                  <option value="">Seleziona un cliente</option>
+                  {clienti.map((cliente) => (
+                    <option key={cliente.id} value={cliente.id}>
+                      {cliente.nome} {cliente.cognome}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className={styles.formSection}>
-          <h2 className={styles.sectionTitle}>Dettagli Ordine</h2>
-          
-          <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-              <label htmlFor="dataOrdine">Data Ordine</label>
-              <input
-                type="date"
-                id="dataOrdine"
-                value={dataOrdine}
-                onChange={(e) => setDataOrdine(e.target.value)}
-                required
-              />
-            </div>
+          <div className={styles.formSection}>
+            <h2 className={styles.sectionTitle}>Dettagli ordine</h2>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="totale">Totale (€)</label>
-              <div className={styles.currencyInput}>
-                <span>€</span>
+            <div className={styles.formGrid}>
+              <div className={styles.formGroup}>
+                <label htmlFor="dataOrdine">Data ordine</label>
+                <input
+                  type="date"
+                  id="dataOrdine"
+                  value={dataOrdine}
+                  onChange={(e) => setDataOrdine(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="costo">Costo (€)</label>
+                <div className={styles.currencyInput}>
+                  <span>€</span>
+                  <input
+                    type="number"
+                    id="costo"
+                    value={costo}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === "") {
+                        setCosto("");
+                        return;
+                      }
+                      const val = Number(raw);
+                      if (Number.isNaN(val)) return;
+                      setCosto(val < 0 ? "0" : raw);
+                    }}
+                    required
+                    min="0"
+                    step="50"
+                    inputMode="decimal"
+                  />
+                </div>
+              </div>
+
+              {/* NUOVO CAMPO: preventivo */}
+              <div className={styles.formGroup}>
+                <label htmlFor="preventivo">Preventivo (€)</label>
+                <div className={styles.currencyInput}>
+                  <span>€</span>
+                  <input
+                    type="number"
+                    id="preventivo"
+                    value={preventivo}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === "") {
+                        setPreventivo("");
+                        return;
+                      }
+                      const val = Number(raw);
+                      if (Number.isNaN(val)) return;
+                      setPreventivo(val < 0 ? "0" : raw);
+                    }}
+                    min="0"
+                    step="50"
+                    inputMode="decimal"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="numeroColli">Numero colli</label>
                 <input
                   type="number"
-                  id="totale"
-                  value={totale}
+                  id="numeroColli"
+                  value={numeroColli}
                   onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    if (!isNaN(val)) setTotale(val < 0 ? '0' : e.target.value);
+                    const raw = e.target.value;
+                    if (raw === "") {
+                      setNumeroColli("");
+                      return;
+                    }
+                    const val = Number(raw);
+                    if (Number.isNaN(val)) return;
+                    setNumeroColli(val < 0 ? "0" : raw);
                   }}
                   required
                   min="0"
-                  step="50"
+                  step="1"
+                  inputMode="numeric"
+                />
+              </div>
+
+              {/* NUOVO CAMPO: immagine disegno */}
+              <div className={styles.formGroup}>
+                <label htmlFor="disegno">Disegno (immagine)</label>
+                <input
+                  type="file"
+                  id="disegno"
+                  accept="image/*"
+                  onChange={(e) => setDisegnoFile(e.target.files?.[0] ?? null)}
                 />
               </div>
             </div>
+          </div>
+
+          <div className={styles.formSection}>
+            <h2 className={styles.sectionTitle}>Spedizione</h2>
 
             <div className={styles.formGroup}>
-              <label htmlFor="numeroColli">Numero Colli</label>
-              <input
-                type="number"
-                id="numeroColli"
-                value={numeroColli}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  if (!isNaN(val)) setNumeroColli(val < 0 ? '0' : e.target.value);
-                }}
-                required
-                min="0"
-                step="1"
-              />
+              <label htmlFor="destinazioneAutomatica">Indirizzo di spedizione</label>
+              <div className={styles.readOnlyField} id="destinazioneAutomatica">
+                {destinazioneAutomatica ||
+                  "Seleziona un cliente per visualizzare l'indirizzo"}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className={styles.formSection}>
-          <h2 className={styles.sectionTitle}>Spedizione</h2>
-          <div className={styles.formGroup}>
-            <label htmlFor="destinazioneAutomatica">Indirizzo di Spedizione</label>
-            <div className={styles.readOnlyField}>
-              {destinazioneAutomatica || "Seleziona un cliente per visualizzare l'indirizzo"}
-            </div>
+          <div className={styles.formActions}>
+            <button type="submit" className={styles.primaryButton}>
+              Crea ordine
+            </button>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={resetForm}
+            >
+              Annulla
+            </button>
           </div>
-        </div>
-
-        <div className={styles.formActions}>
-          <button type="submit" className={styles.primaryButton}>
-            Crea Ordine
-          </button>
-          <button type="button" className={styles.secondaryButton} onClick={() => {
-            setVenditoreId('');
-            setClienteId('');
-            setDataOrdine('');
-            setTotale('');
-            setNumeroColli('');
-          }}>
-            Annulla
-          </button>
-        </div>
-      </form>
-    </div>
+        </form>
+      </section>
+    </main>
   );
 }
-
-export default CreateOrderForm;

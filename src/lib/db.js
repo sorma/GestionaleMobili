@@ -5,7 +5,8 @@ import path from 'path';
 
 // ... (il resto del tuo codice lib/db.js) ...
 
-const DATABASE_PATH = path.resolve('./data.db');
+const DATABASE_PATH = path.join(process.cwd(), "data.db");
+
 
 async function openDb() {
   try {
@@ -67,6 +68,15 @@ async function all(db, sql, params = []) {
       } else {
         resolve(rows);
       }
+    });
+  });
+}
+
+async function closeDb(db) {
+  return new Promise((resolve, reject) => {
+    db.close((err) => {
+      if (err) reject(err);
+      else resolve();
     });
   });
 }
