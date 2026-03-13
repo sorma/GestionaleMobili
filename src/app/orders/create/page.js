@@ -13,13 +13,13 @@ export default function CreateOrderForm() {
 
   const [dataOrdine, setDataOrdine] = useState("");
   const [costo, setCosto] = useState("");
-  const [preventivo, setPreventivo] = useState(""); // <-- nuovo
+  const [preventivo, setPreventivo] = useState("");
   const [numeroColli, setNumeroColli] = useState("");
 
   const [destinazioneAutomatica, setDestinazioneAutomatica] = useState("");
   const [message, setMessage] = useState("");
 
-  const [disegnoFile, setDisegnoFile] = useState(null); // <-- nuovo
+  const [disegnoFile, setDisegnoFile] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -38,8 +38,11 @@ export default function CreateOrderForm() {
             `Errore HTTP venditori! status: ${sellersResponse.status}`
           );
         }
+
         if (!clientsResponse.ok) {
-          throw new Error(`Errore HTTP clienti! status: ${clientsResponse.status}`);
+          throw new Error(
+            `Errore HTTP clienti! status: ${clientsResponse.status}`
+          );
         }
 
         const sellersData = await sellersResponse.json();
@@ -52,12 +55,15 @@ export default function CreateOrderForm() {
         console.error("Errore nel caricamento dati:", error);
         if (!active) return;
         setMessage(
-          `Errore nel caricamento dei dati: ${error?.message || "Errore sconosciuto"}`
+          `Errore nel caricamento dei dati: ${
+            error?.message || "Errore sconosciuto"
+          }`
         );
       }
     }
 
     fetchData();
+
     return () => {
       active = false;
     };
@@ -92,7 +98,7 @@ export default function CreateOrderForm() {
     setNumeroColli("");
     setDestinazioneAutomatica("");
     setMessage("");
-    setDisegnoFile(null); // <-- nuovo
+    setDisegnoFile(null);
   };
 
   const handleSubmit = async (event) => {
@@ -113,24 +119,31 @@ export default function CreateOrderForm() {
       setMessage("Errore: Seleziona un venditore valido.");
       return;
     }
+
     if (!clienteId || Number.isNaN(cliId)) {
       setMessage("Errore: Seleziona un cliente valido.");
       return;
     }
+
     if (!dataOrdine) {
       setMessage("Errore: Seleziona una data ordine valida.");
       return;
     }
+
     if (Number.isNaN(tot) || tot < 0) {
       setMessage("Errore: Inserisci un costo valido (>= 0).");
       return;
     }
+
     if (Number.isNaN(colli) || colli < 0) {
       setMessage("Errore: Inserisci un numero colli valido (>= 0).");
       return;
     }
+
     if (prev !== null && (Number.isNaN(prev) || prev < 0)) {
-      setMessage("Errore: Inserisci un preventivo valido (>= 0) oppure lascia vuoto.");
+      setMessage(
+        "Errore: Inserisci un preventivo valido (>= 0) oppure lascia vuoto."
+      );
       return;
     }
 
@@ -155,7 +168,7 @@ export default function CreateOrderForm() {
       formData.append("destinazione", destinazioneAutomatica);
 
       if (disegnoFile) {
-        formData.append("disegno", disegnoFile); // File in FormData [web:31]
+        formData.append("disegno", disegnoFile);
       }
 
       const response = await fetch("/api/orders", {
@@ -171,6 +184,7 @@ export default function CreateOrderForm() {
         try {
           errorData = await response.json();
         } catch {}
+
         setMessage(
           `Errore nella creazione dell'ordine: ${
             errorData?.error || "Impossibile creare l'ordine."
@@ -187,14 +201,16 @@ export default function CreateOrderForm() {
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
-            <h1 className={styles.heading}>Crea Nuovo Ordine</h1>
+            <p className={styles.pageEyebrow}>Ordini</p>
+            <h1 className={styles.heading}>Crea nuovo ordine</h1>
             <p className={styles.subheading}>
-              Inserisci i dati principali dell’ordine e verifica l’indirizzo di spedizione.
+              Inserisci i dati principali dell’ordine, completa i valori economici
+              e verifica l’indirizzo di spedizione prima della conferma.
             </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
@@ -203,7 +219,9 @@ export default function CreateOrderForm() {
         {message && (
           <div
             className={
-              message.startsWith("Errore") ? styles.errorMessage : styles.successMessage
+              message.startsWith("Errore")
+                ? styles.errorMessage
+                : styles.successMessage
             }
           >
             {message}
@@ -215,7 +233,7 @@ export default function CreateOrderForm() {
             <h2 className={styles.sectionTitle}>Informazioni base</h2>
 
             <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="venditoreId">Venditore</label>
                 <select
                   id="venditoreId"
@@ -232,7 +250,7 @@ export default function CreateOrderForm() {
                 </select>
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="clienteId">Cliente</label>
                 <select
                   id="clienteId"
@@ -255,7 +273,7 @@ export default function CreateOrderForm() {
             <h2 className={styles.sectionTitle}>Dettagli ordine</h2>
 
             <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="dataOrdine">Data ordine</label>
                 <input
                   type="date"
@@ -266,7 +284,7 @@ export default function CreateOrderForm() {
                 />
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="costo">Costo (€)</label>
                 <div className={styles.currencyInput}>
                   <span>€</span>
@@ -288,12 +306,12 @@ export default function CreateOrderForm() {
                     min="0"
                     step="50"
                     inputMode="decimal"
+                    placeholder="0"
                   />
                 </div>
               </div>
 
-              {/* NUOVO CAMPO: preventivo */}
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="preventivo">Preventivo (€)</label>
                 <div className={styles.currencyInput}>
                   <span>€</span>
@@ -314,11 +332,12 @@ export default function CreateOrderForm() {
                     min="0"
                     step="50"
                     inputMode="decimal"
+                    placeholder="0"
                   />
                 </div>
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="numeroColli">Numero colli</label>
                 <input
                   type="number"
@@ -338,11 +357,11 @@ export default function CreateOrderForm() {
                   min="0"
                   step="1"
                   inputMode="numeric"
+                  placeholder="0"
                 />
               </div>
 
-              {/* NUOVO CAMPO: immagine disegno */}
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
                 <label htmlFor="disegno">Disegno (immagine)</label>
                 <input
                   type="file"
@@ -357,25 +376,30 @@ export default function CreateOrderForm() {
           <div className={styles.formSection}>
             <h2 className={styles.sectionTitle}>Spedizione</h2>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="destinazioneAutomatica">Indirizzo di spedizione</label>
-              <div className={styles.readOnlyField} id="destinazioneAutomatica">
-                {destinazioneAutomatica ||
-                  "Seleziona un cliente per visualizzare l'indirizzo"}
+            <div className={styles.formGrid}>
+              <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
+                <label htmlFor="destinazioneAutomatica">
+                  Indirizzo di spedizione
+                </label>
+                <div className={styles.readOnlyField} id="destinazioneAutomatica">
+                  {destinazioneAutomatica ||
+                    "Seleziona un cliente per visualizzare l'indirizzo"}
+                </div>
               </div>
             </div>
           </div>
 
           <div className={styles.formActions}>
-            <button type="submit" className={styles.primaryButton}>
-              Crea ordine
-            </button>
             <button
               type="button"
               className={styles.secondaryButton}
               onClick={resetForm}
             >
               Annulla
+            </button>
+
+            <button type="submit" className={styles.primaryButton}>
+              Crea ordine
             </button>
           </div>
         </form>

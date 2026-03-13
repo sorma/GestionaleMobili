@@ -41,6 +41,7 @@ export default function CreateAppuntamentoPage() {
     }
 
     fetchClients();
+
     return () => {
       active = false;
     };
@@ -76,7 +77,6 @@ export default function CreateAppuntamentoPage() {
       return;
     }
 
-    // telefono SOLO preso dal cliente
     if (!telefono) {
       setMessage("Errore: il cliente selezionato non ha un telefono salvato.");
       return;
@@ -88,7 +88,7 @@ export default function CreateAppuntamentoPage() {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
         body: JSON.stringify({
-          data_ora: dataOra, // datetime-local
+          data_ora: dataOra,
           client_id: clientId,
         }),
       });
@@ -115,14 +115,16 @@ export default function CreateAppuntamentoPage() {
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
-            <h1 className={styles.heading}>Crea Nuovo Appuntamento</h1>
+            <p className={styles.pageEyebrow}>Appuntamenti</p>
+            <h1 className={styles.heading}>Crea nuovo appuntamento</h1>
             <p className={styles.subheading}>
-              Inserisci data/ora e seleziona un cliente (telefono preso automaticamente).
+              Inserisci data e ora dell’appuntamento, seleziona il cliente e
+              verifica automaticamente il recapito associato.
             </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
@@ -145,7 +147,7 @@ export default function CreateAppuntamentoPage() {
             <h2 className={styles.sectionTitle}>Dettagli appuntamento</h2>
 
             <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="dataOra">Data e ora</label>
                 <input
                   type="datetime-local"
@@ -156,7 +158,7 @@ export default function CreateAppuntamentoPage() {
                 />
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="cliente">Cliente</label>
                 <select
                   id="cliente"
@@ -175,31 +177,27 @@ export default function CreateAppuntamentoPage() {
                   ))}
                 </select>
               </div>
-            </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="telefono">Telefono</label>
-              <input
-                type="text"
-                id="telefono"
-                value={telefono}
-                readOnly
-                placeholder="Telefono preso dal cliente"
-              />
+              <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
+                <label htmlFor="telefono">Telefono</label>
+                <div className={styles.readOnlyField} id="telefono">
+                  {telefono || "Telefono preso automaticamente dal cliente selezionato"}
+                </div>
+              </div>
             </div>
           </div>
 
           <div className={styles.formActions}>
-            <button type="submit" className={styles.primaryButton}>
-              Crea appuntamento
-            </button>
-
             <button
               type="button"
               className={styles.secondaryButton}
               onClick={resetForm}
             >
               Annulla
+            </button>
+
+            <button type="submit" className={styles.primaryButton}>
+              Crea appuntamento
             </button>
           </div>
         </form>

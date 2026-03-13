@@ -2,12 +2,12 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
-import styles from "../../styles/order-montaggi-list.module.css";
+import { Trash2, Receipt, TrendingDown, Calendar } from "lucide-react";
+import styles from "../../styles/client-seller-magazine-report-list.module.css";
 
 function toMonthString(dateYYYYMMDD) {
   if (!dateYYYYMMDD || typeof dateYYYYMMDD !== "string") return "";
-  return dateYYYYMMDD.slice(0, 7); // YYYY-MM
+  return dateYYYYMMDD.slice(0, 7);
 }
 
 const MESI = [
@@ -30,17 +30,21 @@ export default function CostiList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // filtri
   const [filterTipologia, setFilterTipologia] = useState("tutti");
-  const [filterYear, setFilterYear] = useState("tutti"); // es. "2026"
-  const [filterMonth, setFilterMonth] = useState("tutti"); // "01".."12"
+  const [filterYear, setFilterYear] = useState("tutti");
+  const [filterMonth, setFilterMonth] = useState("tutti");
 
   const fetchCosti = async () => {
     try {
       setLoading(true);
       setError(null);
+
       const response = await fetch("/api/costi", { cache: "no-store" });
-      if (!response.ok) throw new Error(`Errore HTTP! status: ${response.status}`);
+
+      if (!response.ok) {
+        throw new Error(`Errore HTTP! status: ${response.status}`);
+      }
+
       const data = await response.json();
       setCosti(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -56,10 +60,18 @@ export default function CostiList() {
   }, []);
 
   const handleDeleteCosto = async (id) => {
+    const conferma = window.confirm(`Vuoi davvero eliminare il costo #${id}?`);
+    if (!conferma) return;
+
     try {
       setError(null);
+
       const response = await fetch(`/api/costi/${id}`, { method: "DELETE" });
-      if (!response.ok) throw new Error("Errore eliminazione costo");
+
+      if (!response.ok) {
+        throw new Error("Errore eliminazione costo");
+      }
+
       setCosti((prev) => prev.filter((c) => c.id !== id));
     } catch (err) {
       console.error("Errore eliminazione costo:", err);
@@ -76,8 +88,8 @@ export default function CostiList() {
   }, [costi]);
 
   const yearsList = useMemo(() => {
-    const currentYear = new Date().getFullYear(); // anno corrente [web:306]
-    return Array.from({ length: 6 }, (_, i) => String(currentYear - i)); // 0..5
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 6 }, (_, i) => String(currentYear - i));
   }, []);
 
   const filteredCosti = useMemo(() => {
@@ -85,22 +97,23 @@ export default function CostiList() {
 
     if (filterTipologia !== "tutti") {
       filtered = filtered.filter(
-        (c) => String(c.tipologia || "").toLowerCase() === filterTipologia.toLowerCase()
+        (c) =>
+          String(c.tipologia || "").toLowerCase() ===
+          filterTipologia.toLowerCase()
       );
     }
 
-    // anno
     if (filterYear !== "tutti") {
-      filtered = filtered.filter((c) => String(c.data || "").startsWith(`${filterYear}-`));
+      filtered = filtered.filter((c) =>
+        String(c.data || "").startsWith(`${filterYear}-`)
+      );
     }
 
-    // mese (solo se anno selezionato)
     if (filterYear !== "tutti" && filterMonth !== "tutti") {
-      const ym = `${filterYear}-${filterMonth}`; // YYYY-MM [web:291]
+      const ym = `${filterYear}-${filterMonth}`;
       filtered = filtered.filter((c) => toMonthString(c.data) === ym);
     }
 
-    // ordinamento: data desc, id desc
     filtered.sort((a, b) => {
       const aDate = String(a.data || "");
       const bDate = String(b.data || "");
@@ -118,33 +131,91 @@ export default function CostiList() {
     return filteredCosti.reduce((sum, c) => sum + Number(c.prezzo || 0), 0);
   }, [filteredCosti]);
 
+  const mediaEuro = useMemo(() => {
+    if (total === 0) return 0;
+    return totaleEuro / total;
+  }, [totaleEuro, total]);
+
+  const currentMonthTotal = useMemo(() => {
+    const now = new Date();
+    const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}`;
+
+    return costi
+      .filter((c) => toMonthString(c.data) === ym)
+      .reduce((sum, c) => sum + Number(c.prezzo || 0), 0);
+  }, [costi]);
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat("it-IT", {
+      style: "currency",
+      currency: "EUR",
+    }).format(value);
+  };
+
   return (
     <main className={styles.page}>
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
-            <h1 className={styles.heading}>Elenco Costi</h1>
-            <p className={styles.subheading}>Filtra e visualizza i costi registrati.</p>
+            <p className={styles.pageEyebrow}>Costi</p>
+            <h1 className={styles.heading}>Registro spese</h1>
+            <p className={styles.subheading}>
+              Monitora e gestisci le spese aziendali con filtri per periodo,
+              categoria e analisi aggregate automatiche.
+            </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
 
       <section className={styles.content}>
-        <div className={styles.toolbar}>
-          <div className={styles.counter}>
-            Risultati: <strong>{total}</strong> — Somma:{" "}
-            <strong>
-              {new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(
-                totaleEuro
-              )}
-            </strong>
+        <div className={styles.overviewGrid}>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <Receipt size={18} />
+            </div>
+            <div>
+              <p className={styles.statLabel}>Totale registrato</p>
+              <h3 className={styles.statValue}>{formatCurrency(totaleEuro)}</h3>
+              <p className={styles.statMeta}>
+                Somma di {total} {total === 1 ? "costo" : "costi"} filtrati
+              </p>
+            </div>
           </div>
 
-          <div className={styles.toolbarActions}>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <TrendingDown size={18} />
+            </div>
+            <div>
+              <p className={styles.statLabel}>Media per voce</p>
+              <h3 className={styles.statValue}>{formatCurrency(mediaEuro)}</h3>
+              <p className={styles.statMeta}>Costo medio unitario calcolato</p>
+            </div>
+          </div>
+
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <Calendar size={18} />
+            </div>
+            <div>
+              <p className={styles.statLabel}>Mese corrente</p>
+              <h3 className={styles.statValue}>
+                {formatCurrency(currentMonthTotal)}
+              </h3>
+              <p className={styles.statMeta}>
+                Spese registrate nel mese in corso
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.ctaCard}>
             <Link href="/costi/create" className={styles.primaryLink}>
               + Nuovo costo
             </Link>
@@ -160,64 +231,78 @@ export default function CostiList() {
             <p>Errore: {error}</p>
           </div>
         ) : (
-          <>
-            <div className={styles.filtersContainer}>
-              <div className={styles.filterSelects}>
-                <div className={styles.filterGroup}>
-                  <label htmlFor="filterTipologia">Tipologia</label>
-                  <select
-                    id="filterTipologia"
-                    value={filterTipologia}
-                    onChange={(e) => setFilterTipologia(e.target.value)}
-                  >
-                    <option value="tutti">Tutti</option>
-                    {tipologieList.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+          <div className={styles.panel}>
+            <div className={styles.panelHeader}>
+              <div>
+                <h2 className={styles.panelTitle}>Filtri avanzati</h2>
+                <p className={styles.panelSubtitle}>
+                  Affina la ricerca per categoria, anno e mese specifico.
+                </p>
+              </div>
+            </div>
 
-                <div className={styles.filterGroup}>
-                  <label htmlFor="filterYear">Anno</label>
-                  <select
-                    id="filterYear"
-                    value={filterYear}
-                    onChange={(e) => {
-                      const y = e.target.value;
-                      setFilterYear(y);
-                      setFilterMonth("tutti"); // reset mese quando cambia anno
-                    }}
-                  >
-                    <option value="tutti">Tutti</option>
-                    {yearsList.map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className={styles.filterGroup}>
-                  <label htmlFor="filterMonth">Mese</label>
-                  <select
-                    id="filterMonth"
-                    value={filterMonth}
-                    onChange={(e) => setFilterMonth(e.target.value)}
-                    disabled={filterYear === "tutti"}
-                    title={filterYear === "tutti" ? "Seleziona prima un anno" : ""}
-                  >
-                    <option value="tutti">
-                      {filterYear === "tutti" ? "Seleziona anno" : "Tutti"}
+            <div className={styles.filtersRow}>
+              <div className={styles.filterGroup}>
+                <label htmlFor="filterTipologia">Tipologia</label>
+                <select
+                  id="filterTipologia"
+                  value={filterTipologia}
+                  onChange={(e) => setFilterTipologia(e.target.value)}
+                  className={styles.filterSelect}
+                >
+                  <option value="tutti">Tutte le categorie</option>
+                  {tipologieList.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
                     </option>
-                    {MESI.map((m) => (
-                      <option key={m.value} value={m.value}>
-                        {m.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.filterGroup}>
+                <label htmlFor="filterYear">Anno</label>
+                <select
+                  id="filterYear"
+                  value={filterYear}
+                  onChange={(e) => {
+                    const y = e.target.value;
+                    setFilterYear(y);
+                    setFilterMonth("tutti");
+                  }}
+                  className={styles.filterSelect}
+                >
+                  <option value="tutti">Tutti gli anni</option>
+                  {yearsList.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.filterGroup}>
+                <label htmlFor="filterMonth">Mese</label>
+                <select
+                  id="filterMonth"
+                  value={filterMonth}
+                  onChange={(e) => setFilterMonth(e.target.value)}
+                  disabled={filterYear === "tutti"}
+                  title={
+                    filterYear === "tutti" ? "Seleziona prima un anno" : ""
+                  }
+                  className={styles.filterSelect}
+                >
+                  <option value="tutti">
+                    {filterYear === "tutti"
+                      ? "Seleziona prima l'anno"
+                      : "Tutti i mesi"}
+                  </option>
+                  {MESI.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -228,8 +313,8 @@ export default function CostiList() {
                     <tr>
                       <th className={styles.colId}>ID</th>
                       <th>Tipologia</th>
-                      <th className={styles.colDate}>Data</th>
-                      <th className={styles.colMoney}>Prezzo (€)</th>
+                      <th>Data</th>
+                      <th>Importo</th>
                       <th className={styles.colActions}>Azioni</th>
                     </tr>
                   </thead>
@@ -237,25 +322,37 @@ export default function CostiList() {
                   <tbody>
                     {filteredCosti.map((c) => (
                       <tr key={c.id}>
-                        <td className={`${styles.mono} ${styles.nowrap}`}>{c.id}</td>
-                        <td className={styles.cellWrap}>{c.tipologia}</td>
-                        <td className={`${styles.mono} ${styles.nowrap}`}>{c.data}</td>
-                        <td className={`${styles.mono} ${styles.nowrap}`}>
-                          {new Intl.NumberFormat("it-IT", {
-                            style: "currency",
-                            currency: "EUR",
-                          }).format(Number(c.prezzo || 0))}
-                        </td>
+                        <td className={styles.mono}>{c.id}</td>
+
                         <td>
+                          <div className={styles.cellPrimary}>
+                            {c.tipologia}
+                          </div>
+                          <div className={styles.cellSecondary}>
+                            Costo #{c.id}
+                          </div>
+                        </td>
+
+                        <td>
+                          <span className={styles.contactPill}>{c.data}</span>
+                        </td>
+
+                        <td>
+                          <div className={styles.cellPrimary}>
+                            {formatCurrency(Number(c.prezzo || 0))}
+                          </div>
+                        </td>
+
+                        <td className={styles.actionsCell}>
                           <div className={styles.actions}>
                             <button
                               type="button"
                               onClick={() => handleDeleteCosto(c.id)}
-                              className={styles.deleteButton}
+                              className={styles.iconDangerButton}
                               aria-label={`Elimina costo ${c.id}`}
-                              title="Elimina"
+                              title="Elimina costo"
                             >
-                              <Trash2 size={18} />
+                              <Trash2 size={17} />
                             </button>
                           </div>
                         </td>
@@ -265,11 +362,11 @@ export default function CostiList() {
                 </table>
               </div>
             ) : (
-              <div className={styles.stateBox}>
+              <div className={styles.stateBox} style={{ marginTop: "1rem" }}>
                 <p>Nessun costo trovato con i filtri selezionati</p>
               </div>
             )}
-          </>
+          </div>
         )}
       </section>
     </main>

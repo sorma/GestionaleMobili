@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import styles from "../../../styles/form.module.css";
 import ReactCountryFlag from "react-country-flag";
+import styles from "../../../styles/form.module.css";
 
 const prefissiEuropei = [
   { label: "Italia (+39)", value: "+39", code: "IT", nazione: "Italia" },
@@ -105,14 +105,16 @@ export default function CreateClientForm() {
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
-            <h1 className={styles.heading}>Crea Nuovo Cliente</h1>
+            <p className={styles.pageEyebrow}>Clienti</p>
+            <h1 className={styles.heading}>Crea nuovo cliente</h1>
             <p className={styles.subheading}>
-              Inserisci i dati anagrafici e i contatti del cliente.
+              Inserisci i dati anagrafici, l’indirizzo e i recapiti del cliente
+              per completare correttamente la registrazione.
             </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
@@ -135,7 +137,7 @@ export default function CreateClientForm() {
             <h2 className={styles.sectionTitle}>Informazioni personali</h2>
 
             <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="nome">Nome</label>
                 <input
                   type="text"
@@ -143,10 +145,11 @@ export default function CreateClientForm() {
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   required
+                  placeholder="Inserisci il nome"
                 />
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="cognome">Cognome</label>
                 <input
                   type="text"
@@ -154,6 +157,7 @@ export default function CreateClientForm() {
                   value={cognome}
                   onChange={(e) => setCognome(e.target.value)}
                   required
+                  placeholder="Inserisci il cognome"
                 />
               </div>
             </div>
@@ -162,82 +166,108 @@ export default function CreateClientForm() {
           <div className={styles.formSection}>
             <h2 className={styles.sectionTitle}>Indirizzo</h2>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="indirizzo">Indirizzo completo</label>
-              <input
-                type="text"
-                id="indirizzo"
-                value={indirizzo}
-                onChange={(e) => setIndirizzo(e.target.value)}
-              />
+            <div className={styles.formGrid}>
+              <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
+                <label htmlFor="indirizzo">Indirizzo completo</label>
+                <input
+                  type="text"
+                  id="indirizzo"
+                  value={indirizzo}
+                  onChange={(e) => setIndirizzo(e.target.value)}
+                  placeholder="Via, numero civico, città"
+                />
+              </div>
             </div>
           </div>
 
           <div className={styles.formSection}>
             <h2 className={styles.sectionTitle}>Contatti</h2>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="telefono">Numero di telefono</label>
+            <div className={styles.formGrid}>
+              <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
+                <label htmlFor="telefono">Numero di telefono</label>
 
-              {/* Layout migliorato: prefisso e numero separati */}
-              <div className={styles.phoneField}>
-                <div className={styles.phonePrefixBlock}>
-                  <div className={styles.phonePrefixLabel}>Prefisso</div>
-
-                  <div className={styles.phonePrefix}>
-                    <ReactCountryFlag
-                      countryCode={getFlagCode(prefissoSelezionato)}
-                      svg
-                      style={{ width: "1.35em", height: "1.35em" }}
-                      title={nazioneSelezionata}
-                    />
-
+                <div className={styles.phoneField}>
+                  <div className={`${styles.formGroup} ${styles.phonePrefixBlock}`}>
+                    <label htmlFor="prefisso" className={styles.phonePrefixLabel}>
+                      Prefisso
+                    </label>
                     <select
+                      id="prefisso"
                       value={prefissoSelezionato}
                       onChange={handlePrefissoChange}
                       aria-label="Prefisso internazionale"
                     >
                       {prefissiEuropei.map((prefisso) => (
                         <option key={prefisso.value} value={prefisso.value}>
-                          {prefisso.value}
+                          {prefisso.label}
                         </option>
                       ))}
                     </select>
                   </div>
+
+                  <div className={`${styles.formGroup} ${styles.phoneNumberBlock}`}>
+                    <label htmlFor="telefono" className={styles.phonePrefixLabel}>
+                      Numero
+                    </label>
+                    <input
+                      id="telefono"
+                      type="text"
+                      value={numeroTelefono}
+                      onChange={handleNumeroTelefonoChange}
+                      placeholder="Inserisci il numero"
+                      inputMode="tel"
+                    />
+                  </div>
                 </div>
 
-                <div className={styles.phoneNumberBlock}>
-                  <div className={styles.phonePrefixLabel}>Numero</div>
-
-                  <input
-                    id="telefono"
-                    type="text"
-                    value={numeroTelefono}
-                    onChange={handleNumeroTelefonoChange}
-                    placeholder="Numero"
-                    className={styles.phoneNumberInput}
-                    inputMode="tel"
+                <div
+                  style={{
+                    marginTop: "0.7rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.55rem",
+                    color: "#475569",
+                    fontSize: "0.92rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  <ReactCountryFlag
+                    countryCode={getFlagCode(prefissoSelezionato)}
+                    svg
+                    style={{ width: "1.2em", height: "1.2em" }}
+                    title={nazioneSelezionata}
                   />
+                  <span>{nazioneSelezionata}</span>
                 </div>
-              </div>
 
-              {erroreNumero && (
-                <p className={styles.inputError}>{erroreNumero}</p>
-              )}
+                {erroreNumero && (
+                  <p
+                    style={{
+                      marginTop: "0.55rem",
+                      color: "#991b1b",
+                      fontSize: "0.88rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {erroreNumero}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
           <div className={styles.formActions}>
-            <button type="submit" className={styles.primaryButton}>
-              Crea cliente
-            </button>
-
             <button
               type="button"
               className={styles.secondaryButton}
               onClick={resetForm}
             >
               Annulla
+            </button>
+
+            <button type="submit" className={styles.primaryButton}>
+              Crea cliente
             </button>
           </div>
         </form>

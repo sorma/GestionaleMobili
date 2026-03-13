@@ -2,9 +2,13 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Calendar from "react-calendar";
-import "react-calendar/dist/Calendar.css";
+import dynamic from "next/dynamic";
+import { Calendar as CalendarIcon, AlertCircle, Clock, TrendingUp, ChevronRight } from "lucide-react";
 import styles from "../../styles/calendar.module.css";
+
+// Importa Calendar dinamicamente SOLO lato client
+const Calendar = dynamic(() => import("react-calendar"), { ssr: false });
+import "react-calendar/dist/Calendar.css";
 
 // Funzione per formattare le date in YYYY-MM-DD
 function formatDateLocal(date) {
@@ -47,6 +51,12 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [date, setDate] = useState(new Date());
+  const [mounted, setMounted] = useState(false);
+
+  // Controlla se il componente è montato lato client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -87,6 +97,34 @@ export default function CalendarPage() {
     return map;
   }, [events]);
 
+  // Statistiche rapide
+  const stats = useMemo(() => {
+    const today = formatDateLocal(new Date());
+    const futureEvents = events.filter(e => e.date >= today);
+    const scadenzeScadute = events.filter(e => 
+      String(e.type).startsWith("mezzo_") && isPast(e.date)
+    );
+
+    return {
+      totaleEventi: events.length,
+      eventiProssimi: futureEvents.length,
+      scadenzeScadute: scadenzeScadute.length,
+    };
+  }, [events]);
+
+  // Prossimi 7 giorni di eventi
+  const upcomingEvents = useMemo(() => {
+    const today = formatDateLocal(new Date());
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const nextWeekString = formatDateLocal(nextWeek);
+
+    return events
+      .filter(e => e.date >= today && e.date <= nextWeekString)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, 10);
+  }, [events]);
+
   const tileClassName = ({ date, view }) => {
     if (view !== "month") return null;
 
@@ -123,21 +161,9 @@ export default function CalendarPage() {
     const dayEvents = eventsByDate.get(dateString);
     if (!dayEvents || dayEvents.length === 0) return null;
 
-    const showOrder = dayEvents.some((e) => e.type === "ordine");
-    const showMontaggio = dayEvents.some((e) => e.type === "montaggio");
-    const showApp = dayEvents.some((e) => e.type === "appuntamento");
-    const showRev = dayEvents.some((e) => e.type === "mezzo_revisione");
-    const showAss = dayEvents.some((e) => e.type === "mezzo_assicurazione");
-    const showTag = dayEvents.some((e) => e.type === "mezzo_tagliando");
-
     return (
-      <div className={styles.eventIndicators}>
-        {showOrder && <span className={styles.orderIndicator} />}
-        {showMontaggio && <span className={styles.montaggioIndicator} />}
-        {showApp && <span className={styles.appuntamentoIndicator} />}
-        {showRev && <span className={styles.revisioneIndicator} />}
-        {showAss && <span className={styles.assicurazioneIndicator} />}
-        {showTag && <span className={styles.tagliandoIndicator} />}
+      <div className={styles.eventCount}>
+        {dayEvents.length}
       </div>
     );
   };
@@ -148,10 +174,20 @@ export default function CalendarPage() {
 
     if (!dayEvents || dayEvents.length === 0) {
       return (
-        <p className={styles.emptyText}>
-          Nessun evento per il{" "}
-          {new Date(selectedDateString).toLocaleDateString("it-IT")}.
-        </p>
+        <div className={styles.emptyState}>
+          <CalendarIcon size={36} className={styles.emptyIcon} />
+          <p className={styles.emptyText}>
+            Nessun evento programmato
+          </p>
+          <p className={styles.emptySubtext}>
+            {new Date(selectedDateString).toLocaleDateString("it-IT", { 
+              weekday: 'long', 
+              day: 'numeric', 
+              month: 'long', 
+              year: 'numeric' 
+            })}
+          </p>
+        </div>
       );
     }
 
@@ -220,7 +256,6 @@ export default function CalendarPage() {
                   <span className={styles.startDateMarker}>Inizio</span>
                 )}
 
-                {/* ✅ Appuntamenti: SOLO ORA + CLIENTE */}
                 {event.type === "appuntamento" && event.time ? (
                   <span className={styles.eventMeta}>
                     Ora: <strong className={styles.mono}>{event.time}</strong>
@@ -263,16 +298,17 @@ export default function CalendarPage() {
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
+            <p className={styles.pageEyebrow}>Pianificazione & Scadenze</p>
             <h1 className={styles.heading}>
-              Calendario Ordini, Montaggi, Appuntamenti e Scadenze
+              Calendario Aziendale
             </h1>
             <p className={styles.subheading}>
-              Seleziona un giorno per vedere ordini, montaggi, appuntamenti e scadenze dei mezzi.
+              Panoramica completa degli eventi aziendali con gestione ordini, montaggi, appuntamenti e scadenze mezzi.
             </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
@@ -285,56 +321,206 @@ export default function CalendarPage() {
           </div>
         ) : error ? (
           <div className={styles.stateBoxError}>
+            <AlertCircle size={20} />
             <p>Errore nel caricamento del calendario: {error}</p>
           </div>
         ) : (
-          <div className={styles.grid}>
-            <div className={styles.card}>
-              <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Calendario</h2>
-
-                <div className={styles.legend}>
-                  <span className={styles.legendItem}>
-                    <span className={styles.legendDotOrder} /> Ordini
-                  </span>
-                  <span className={styles.legendItem}>
-                    <span className={styles.legendDotMontaggio} /> Montaggi
-                  </span>
-                  <span className={styles.legendItem}>
-                    <span className={styles.legendDotAppuntamento} /> Appuntamenti
-                  </span>
-                  <span className={styles.legendItem}>
-                    <span className={styles.legendDotRevisione} /> Revisione
-                  </span>
-                  <span className={styles.legendItem}>
-                    <span className={styles.legendDotAssicurazione} /> Assicurazione
-                  </span>
-                  <span className={styles.legendItem}>
-                    <span className={styles.legendDotTagliando} /> Tagliando
-                  </span>
+          <>
+            {/* Statistiche rapide */}
+            <div className={styles.statsGrid}>
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>
+                  <CalendarIcon size={16} />
+                </div>
+                <div>
+                  <p className={styles.statLabel}>Totale eventi</p>
+                  <h3 className={styles.statValue}>{stats.totaleEventi}</h3>
+                  <p className={styles.statMeta}>Nel database</p>
                 </div>
               </div>
 
-              <div className={styles.calendarWrap}>
-                <Calendar
-                  onChange={setDate}
-                  value={date}
-                  locale="it-IT"
-                  tileClassName={tileClassName}
-                  tileContent={tileContent}
-                />
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>
+                  <TrendingUp size={16} />
+                </div>
+                <div>
+                  <p className={styles.statLabel}>Eventi futuri</p>
+                  <h3 className={styles.statValue}>{stats.eventiProssimi}</h3>
+                  <p className={styles.statMeta}>Programmati in calendario</p>
+                </div>
+              </div>
+
+              <div className={styles.statCard}>
+                <div className={styles.statIcon} style={{ background: stats.scadenzeScadute > 0 ? '#fee2e2' : '#eef2ff' }}>
+                  <Clock size={16} style={{ color: stats.scadenzeScadute > 0 ? '#991b1b' : '#1e293b' }} />
+                </div>
+                <div>
+                  <p className={styles.statLabel}>Scadenze scadute</p>
+                  <h3 className={styles.statValue} style={{ color: stats.scadenzeScadute > 0 ? '#dc2626' : '#0f172a' }}>
+                    {stats.scadenzeScadute}
+                  </h3>
+                  <p className={styles.statMeta}>
+                    {stats.scadenzeScadute > 0 ? 'Richiedono attenzione' : 'Tutte in regola'}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className={styles.card}>
-              <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Eventi del giorno</h2>
-                <div className={styles.selectedPill}>{date.toLocaleDateString("it-IT")}</div>
+            {/* Layout Orizzontale PROPORZIONATO: Eventi prossimi + Calendario + Eventi giorno */}
+            <div className={styles.mainGrid}>
+              {/* Colonna Sinistra: Prossimi Eventi (7 giorni) */}
+              <div className={styles.panel}>
+                <div className={styles.panelHeader}>
+                  <div>
+                    <h2 className={styles.panelTitle}>Prossimi eventi</h2>
+                    <p className={styles.panelSubtitle}>
+                      Pianificazione dei prossimi 7 giorni
+                    </p>
+                  </div>
+                </div>
+
+                <div className={styles.upcomingEventsPanel}>
+                  {upcomingEvents.length === 0 ? (
+                    <div className={styles.emptyStateSmall}>
+                      <p className={styles.emptyTextSmall}>Nessun evento nei prossimi 7 giorni</p>
+                    </div>
+                  ) : (
+                    <ul className={styles.compactEventList}>
+                      {upcomingEvents.map((event, index) => {
+                        const euro = (n) =>
+                          new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(
+                            Number(n || 0)
+                          );
+
+                        const eventDate = new Date(event.date + "T00:00:00");
+                        const isMezzo = String(event.type).startsWith("mezzo_");
+                        const expired = isMezzo && isPast(event.date);
+
+                        return (
+                          <li key={index} className={styles.compactEventItem} onClick={() => setDate(eventDate)}>
+                            <div className={styles.compactEventDate}>
+                              <span className={styles.compactDay}>
+                                {eventDate.getDate()}
+                              </span>
+                              <span className={styles.compactMonth}>
+                                {eventDate.toLocaleDateString("it-IT", { month: 'short' })}
+                              </span>
+                            </div>
+
+                            <div className={styles.compactEventContent}>
+                              <div className={styles.compactEventTop}>
+                                <span
+                                  className={`${styles.compactEventType} ${
+                                    event.type === "ordine"
+                                      ? styles.orderType
+                                      : event.type === "montaggio"
+                                      ? styles.montaggioType
+                                      : event.type === "appuntamento"
+                                      ? styles.appuntamentoType
+                                      : styles.mezzoType
+                                  }`}
+                                >
+                                  {typeLabel(event.type)}
+                                </span>
+                                
+                                {!isMezzo && event.type !== "appuntamento" && (
+                                  <span className={styles.compactEventValue}>
+                                    {euro(event.value)}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className={styles.compactEventMeta}>
+                                {event.cliente && <span>Cliente: {event.cliente}</span>}
+                                {event.label && <span>Mezzo: {event.label}</span>}
+                                {event.time && <span>Ore: {event.time}</span>}
+                              </div>
+                            </div>
+
+                            <ChevronRight size={14} className={styles.compactEventArrow} />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
               </div>
 
-              <div className={styles.eventsPanel}>{renderSelectedDayEvents()}</div>
+              {/* Colonna Centrale: Calendario */}
+              <div className={styles.panel}>
+                <div className={styles.panelHeader}>
+                  <div>
+                    <h2 className={styles.panelTitle}>Calendario mensile</h2>
+                    <p className={styles.panelSubtitle}>
+                      Seleziona un giorno per visualizzare gli eventi
+                    </p>
+                  </div>
+                </div>
+
+                <div className={styles.legendContainer}>
+                  <div className={styles.legend}>
+                    <span className={styles.legendItem}>
+                      <span className={styles.legendDotOrder} /> Ordini
+                    </span>
+                    <span className={styles.legendItem}>
+                      <span className={styles.legendDotMontaggio} /> Montaggi
+                    </span>
+                    <span className={styles.legendItem}>
+                      <span className={styles.legendDotAppuntamento} /> Appuntamenti
+                    </span>
+                    <span className={styles.legendItem}>
+                      <span className={styles.legendDotRevisione} /> Revisione
+                    </span>
+                    <span className={styles.legendItem}>
+                      <span className={styles.legendDotAssicurazione} /> Assicurazione
+                    </span>
+                    <span className={styles.legendItem}>
+                      <span className={styles.legendDotTagliando} /> Tagliando
+                    </span>
+                  </div>
+                </div>
+
+                <div className={styles.calendarWrap}>
+                  {/* Renderizza Calendar SOLO lato client */}
+                  {mounted ? (
+                    <Calendar
+                      onChange={setDate}
+                      value={date}
+                      locale="it-IT"
+                      tileClassName={tileClassName}
+                      tileContent={tileContent}
+                    />
+                  ) : (
+                    <div className={styles.calendarLoading}>
+                      <div className={styles.spinner} />
+                      <p>Caricamento calendario...</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Colonna Destra: Eventi del giorno selezionato */}
+              <div className={styles.panel}>
+                <div className={styles.panelHeader}>
+                  <div>
+                    <h2 className={styles.panelTitle}>Eventi del giorno</h2>
+                    <p className={styles.panelSubtitle}>
+                      {date.toLocaleDateString("it-IT", { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'long'
+                      })}
+                    </p>
+                  </div>
+                  <div className={styles.selectedPill}>
+                    {date.toLocaleDateString("it-IT", { day: 'numeric', month: 'short' })}
+                  </div>
+                </div>
+
+                <div className={styles.eventsPanel}>{renderSelectedDayEvents()}</div>
+              </div>
             </div>
-          </div>
+          </>
         )}
       </section>
     </main>

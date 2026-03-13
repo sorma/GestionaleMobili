@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  FaUser,
-  FaUsers,
   FaHome,
   FaClipboardList,
   FaChartBar,
@@ -14,19 +12,160 @@ import {
   FaCalendarAlt,
   FaWarehouse,
   FaSignOutAlt,
+  FaTruck,
+  FaBook,
+  FaChevronRight,
 } from "react-icons/fa";
 import { MdPeopleAlt, MdPersonAdd } from "react-icons/md";
-import { FaTruck } from "react-icons/fa";
-import { FaBook } from "react-icons/fa"; // <-- aggiungi tra gli import (in alto)
+import { FaUser, FaUsers } from "react-icons/fa";
 
+const NAV_ITEMS = [
+  { label: "Dashboard", href: "/", icon: <FaHome /> },
+  { label: "Ordini", href: "/orders", icon: <FaClipboardList /> },
+  { label: "Clienti", href: "/clients", icon: <FaUsers /> },
+  { label: "Venditori", href: "/sellers", icon: <MdPeopleAlt /> },
+  { label: "Montaggi", href: "/montaggi", icon: <FaTools /> },
+  { label: "Magazzino", href: "/magazzino", icon: <FaWarehouse /> },
+  { label: "Appuntamenti", href: "/appuntamenti", icon: <FaCalendarAlt /> },
+  { label: "Mezzi", href: "/mezzi", icon: <FaTruck /> },
+  { label: "Costi", href: "/costi", icon: <FaChartBar /> },
+  { label: "Guadagni", href: "/guadagni", icon: <FaChartBar /> },
+];
 
-const BORDER_CLASS = {
-  indigo: "border-l-indigo-600",
-  purple: "border-l-purple-600",
-  emerald: "border-l-emerald-600",
-  orange: "border-l-orange-600",
-  gray: "border-l-slate-500",
-};
+const QUICK_ACTIONS = [
+  {
+    title: "Nuovo ordine",
+    description: "Inserimento rapido di un nuovo ordine cliente",
+    href: "/orders/create",
+    icon: <FaClipboardList />,
+  },
+  {
+    title: "Nuovo appuntamento",
+    description: "Agenda showroom e appuntamenti commerciali",
+    href: "/appuntamenti/create",
+    icon: <FaCalendarAlt />,
+  },
+  {
+    title: "Nuovo montaggio",
+    description: "Programmazione e registrazione attività di montaggio",
+    href: "/montaggi/create",
+    icon: <FaWrench />,
+  },
+  {
+    title: "Nuovo cliente",
+    description: "Creazione anagrafica cliente",
+    href: "/clients/create",
+    icon: <FaUser />,
+  },
+];
+
+const SECTIONS = [
+  {
+    title: "Operatività",
+    description: "Attività principali del flusso quotidiano.",
+    items: [
+      {
+        name: "Ordini",
+        icon: <FaClipboardList />,
+        actions: [
+          { label: "Nuovo", href: "/orders/create" },
+          { label: "Elenco", href: "/orders" },
+        ],
+      },
+      {
+        name: "Montaggi",
+        icon: <FaTools />,
+        actions: [
+          { label: "Nuovo", href: "/montaggi/create" },
+          { label: "Elenco", href: "/montaggi" },
+        ],
+      },
+      {
+        name: "Appuntamenti",
+        icon: <FaCalendarAlt />,
+        actions: [
+          { label: "Nuovo", href: "/appuntamenti/create" },
+          { label: "Agenda", href: "/appuntamenti" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Anagrafiche",
+    description: "Gestione soggetti e relazioni commerciali.",
+    items: [
+      {
+        name: "Clienti",
+        icon: <FaUsers />,
+        actions: [
+          { label: "Nuovo", href: "/clients/create" },
+          { label: "Elenco", href: "/clients" },
+        ],
+      },
+      {
+        name: "Venditori",
+        icon: <MdPersonAdd />,
+        actions: [
+          { label: "Nuovo", href: "/sellers/create" },
+          { label: "Elenco", href: "/sellers" },
+        ],
+      },
+      {
+        name: "Cataloghi",
+        icon: <FaBook />,
+        actions: [
+          { label: "Arredo3", href: "/cataloghi/arredo3" },
+          { label: "Tagliabue", href: "/cataloghi/tagliabue" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Logistica e controllo",
+    description: "Magazzino, mezzi, costi e analisi economiche.",
+    items: [
+      {
+        name: "Magazzino",
+        icon: <FaWarehouse />,
+        actions: [
+          { label: "Nuovo", href: "/magazzino/create" },
+          { label: "Elenco", href: "/magazzino" },
+        ],
+      },
+      {
+        name: "Mezzi",
+        icon: <FaTruck />,
+        actions: [
+          { label: "Nuovo", href: "/mezzi/create" },
+          { label: "Elenco", href: "/mezzi" },
+        ],
+      },
+      {
+        name: "Costi",
+        icon: <FaChartBar />,
+        actions: [
+          { label: "Nuovo", href: "/costi/create" },
+          { label: "Elenco", href: "/costi" },
+        ],
+      },
+      {
+        name: "Report ordini",
+        icon: <FaInfoCircle />,
+        actions: [{ label: "Apri report", href: "/reports" }],
+      },
+      {
+        name: "Report montaggi",
+        icon: <FaInfoCircle />,
+        actions: [{ label: "Apri report", href: "/montaggi/reports" }],
+      },
+      {
+        name: "Guadagni",
+        icon: <FaChartBar />,
+        actions: [{ label: "Apri report", href: "/guadagni" }],
+      },
+    ],
+  },
+];
 
 export default function Home() {
   const router = useRouter();
@@ -44,206 +183,226 @@ export default function Home() {
   };
 
   return (
-    <main className="relative min-h-screen w-full bg-slate-50 overflow-hidden">
-      {/* Sfondo */}
-      <div className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute inset-0 bg-center bg-cover"
-          style={{ backgroundImage: "url('/images/bg-mobili.jpg')" }}
-        />
-        <div className="absolute inset-0 bg-white/65" />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-white/70" />
-      </div>
-
-      {/* Contenuto */}
-      <div className="relative mx-auto max-w-7xl px-4 py-10 md:px-12">
-        {/* Header */}
-        <header className="relative z-10 -mx-4 md:-mx-12 mb-10 border-b border-slate-200/90 bg-white/75 backdrop-blur-md">
-          <div className="mx-auto max-w-7xl px-4 py-6 md:px-12">
-            <div className="flex items-start justify-between gap-6">
+    <main className="min-h-screen bg-[#f6f7f9] text-slate-900">
+      <div className="flex min-h-screen">
+        <aside className="hidden w-[260px] shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
+          <div className="border-b border-slate-200 px-6 py-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700">
+                <FaHome className="text-lg" />
+              </div>
               <div>
-                <div className="inline-flex items-center gap-3 text-slate-700">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white/80 backdrop-blur">
-                    <FaHome className="text-lg text-slate-700" />
-                  </span>
-                  <span className="text-sm font-medium tracking-wide uppercase">
-                    Gestionale
-                  </span>
-                </div>
-
-                <h1 className="mt-3 text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
-                  Arredamenti <span className="text-slate-700">Sormani</span>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Gestionale
+                </p>
+                <h1 className="text-base font-semibold text-slate-900">
+                  Arredamenti Sormani
                 </h1>
+              </div>
+            </div>
+          </div>
 
-                <p className="mt-2 max-w-2xl text-base text-slate-600">
-                  Accesso rapido alle funzioni principali.
+          <nav className="flex-1 px-4 py-5">
+            <div className="space-y-1">
+              {NAV_ITEMS.map((item) => (
+                <SidebarLink
+                  key={item.label}
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  active={item.href === "/"}
+                />
+              ))}
+            </div>
+          </nav>
+
+          <div className="border-t border-slate-200 p-4">
+            <button
+              onClick={handleLogout}
+              type="button"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600">
+                <FaSignOutAlt />
+              </span>
+              Esci
+            </button>
+          </div>
+        </aside>
+
+        <div className="min-w-0 flex-1">
+          <header className="border-b border-slate-200 bg-white">
+            <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-5 md:px-8">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Dashboard
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+                  Pannello operativo
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  Accesso rapido ai moduli principali del gestionale.
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <Link
                   href="/calendar"
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white/80 backdrop-blur px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-white hover:border-slate-300 transition-colors"
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
                 >
-                  <FaCalendarAlt className="text-slate-700" />
+                  <FaCalendarAlt className="text-slate-600" />
                   Calendario
                 </Link>
 
                 <button
                   onClick={handleLogout}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white/80 backdrop-blur px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-white hover:border-slate-300 transition-colors cursor-pointer"
                   type="button"
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 lg:hidden"
                 >
-                  <FaSignOutAlt className="text-slate-700" />
+                  <FaSignOutAlt className="text-slate-600" />
                   Esci
                 </button>
               </div>
             </div>
+          </header>
+
+          <div className="mx-auto max-w-7xl px-4 py-8 md:px-8">
+            <section>
+              <div className="mb-4 flex items-end justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    Azioni rapide
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Collegamenti diretti alle operazioni più frequenti.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {QUICK_ACTIONS.map((action) => (
+                  <QuickActionCard
+                    key={action.title}
+                    href={action.href}
+                    icon={action.icon}
+                    title={action.title}
+                    description={action.description}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-8 grid gap-6 xl:grid-cols-3">
+              {SECTIONS.map((section) => (
+                <SectionPanel
+                  key={section.title}
+                  title={section.title}
+                  description={section.description}
+                  items={section.items}
+                />
+              ))}
+            </section>
           </div>
-        </header>
-
-        {/* Sezioni */}
-        <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <Group title="Ordini" tone="indigo">
-            <Card
-              href="/orders/create"
-              icon={<FaClipboardList />}
-              title="Nuovo ordine"
-              badge="Crea"
-            />
-            <Card
-              href="/orders"
-              icon={<FaClipboardList />}
-              title="Lista ordini"
-              badge="Elenco"
-            />
-          </Group>
-
-          <Group title="Clienti" tone="purple">
-            <Card href="/clients/create" icon={<FaUser />} title="Nuovo cliente" badge="Crea" />
-            <Card href="/clients" icon={<FaUsers />} title="Lista clienti" badge="Elenco" />
-          </Group>
-
-          <Group title="Venditori" tone="emerald">
-            <Card href="/sellers/create" icon={<MdPersonAdd />} title="Nuovo venditore" badge="Crea" />
-            <Card href="/sellers" icon={<MdPeopleAlt />} title="Lista venditori" badge="Elenco" />
-          </Group>
-
-          <Group title="Montaggi" tone="orange">
-            <Card href="/montaggi/create" icon={<FaWrench />} title="Nuovo montaggio" badge="Crea" />
-            <Card href="/montaggi" icon={<FaTools />} title="Lista montaggi" badge="Elenco" />
-          </Group>
-
-          <Group title="Magazzino" tone="indigo">
-            <Card href="/magazzino/create" icon={<FaWarehouse />} title="Nuovo carico" badge="Crea" />
-            <Card href="/magazzino" icon={<FaWarehouse />} title="Lista magazzino" badge="Elenco" />
-          </Group>
-
-          <Group title="Report & statistiche" tone="gray">
-            <Card href="/reports" icon={<FaChartBar />} title="Report ordini" />
-            <Card href="/montaggi/reports" icon={<FaInfoCircle />} title="Report montaggi" />
-          </Group>
-
-          <Group title="Mezzi da lavoro" tone="emerald">
-            <Card href="/mezzi/create" icon={<FaTruck />} title="Nuovo mezzo" badge="Crea" />
-            <Card href="/mezzi" icon={<FaClipboardList />} title="Lista mezzi" badge="Elenco" />
-          </Group>
-
-          <Group title="Costi" tone="gray">
-            <Card href="/costi/create" icon={<FaChartBar />} title="Nuovo costo" badge="Crea" />
-            <Card href="/costi" icon={<FaClipboardList />} title="Lista costi" badge="Elenco" />
-          </Group>
-
-          <Group title="Guadagni" tone="indigo">
-            <Card href="/guadagni" icon={<FaChartBar />} title="Guadagni effettivi" badge="Report" />
-          </Group>
-
-          {/* ✅ NUOVO GRUPPO: Appuntamenti (card come le altre) */}
-          <Group title="Appuntamenti" tone="indigo">
-            <Card
-              href="/appuntamenti/create"
-              icon={<FaCalendarAlt />}
-              title="Nuovo appuntamento"
-              badge="Crea"
-            />
-            <Card
-              href="/appuntamenti"
-              icon={<FaCalendarAlt />}
-              title="Agenda appuntamenti"
-              badge="Elenco"
-            />
-          </Group>
-
-          <Group title="Cataloghi" tone="purple">
-            <Card
-              href="/cataloghi/arredo3"
-              icon={<FaBook />}
-              title="Catalogo Arredo3"
-              badge="Apri"
-            />
-            <Card
-              href="/cataloghi/tagliabue"
-              icon={<FaBook />}
-              title="Catalogo Tagliabue"
-              badge="Apri"
-            />
-          </Group>
-
-        </section>
+        </div>
       </div>
     </main>
   );
 }
 
-function Group({ title, tone, children }) {
-  const border = BORDER_CLASS[tone] ?? "border-l-slate-500";
-
-  return (
-    <div
-      className={[
-        "rounded-xl bg-white/85 backdrop-blur shadow-sm ring-1 ring-slate-200",
-        "border-l-4",
-        border,
-      ].join(" ")}
-    >
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-        <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-      </div>
-
-      <div className="grid gap-2 p-3">{children}</div>
-    </div>
-  );
-}
-function Card({ href, icon, title, badge }) {
+function SidebarLink({ href, icon, label, active = false }) {
   return (
     <Link
       href={href}
       className={[
-        "group flex items-start gap-3 rounded-lg border border-slate-200 bg-white/90 backdrop-blur",
-        "px-4 py-3",
-        "transition-all duration-150",
-        "hover:bg-white hover:border-slate-300 hover:shadow-sm hover:-translate-y-[1px]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white/60",
+        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition",
+        active
+          ? "bg-slate-900 text-white"
+          : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
       ].join(" ")}
     >
-      <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-md bg-slate-100 text-slate-700 transition-colors group-hover:bg-slate-200/70">
-        <span className="text-lg">{icon}</span>
-      </div>
+      <span
+        className={[
+          "flex h-9 w-9 items-center justify-center rounded-md border text-sm",
+          active
+            ? "border-slate-800 bg-slate-800 text-white"
+            : "border-slate-200 bg-white text-slate-600",
+        ].join(" ")}
+      >
+        {icon}
+      </span>
+      <span>{label}</span>
+    </Link>
+  );
+}
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="truncate text-sm font-semibold text-slate-900">
-            {title}
-          </h3>
+function QuickActionCard({ href, icon, title, description }) {
+  return (
+    <Link
+      href={href}
+      className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:bg-slate-50"
+    >
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700">
+          {icon}
+        </div>
 
-          {badge ? (
-            <span className="shrink-0 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600 group-hover:border-slate-300">
-              {badge}
-            </span>
-          ) : null}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm font-semibold text-slate-900">{title}</h4>
+            <FaChevronRight className="text-xs text-slate-400 transition group-hover:text-slate-600" />
+          </div>
+          <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
         </div>
       </div>
     </Link>
   );
 }
 
+function SectionPanel({ title, description, items }) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-200 px-5 py-4">
+        <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+        <p className="mt-1 text-sm text-slate-600">{description}</p>
+      </div>
+
+      <div className="divide-y divide-slate-200">
+        {items.map((item) => (
+          <ActionRow
+            key={item.name}
+            icon={item.icon}
+            name={item.name}
+            actions={item.actions}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ActionRow({ icon, name, actions }) {
+  return (
+    <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700">
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-slate-900">{name}</p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {actions.map((action) => (
+          <Link
+            key={action.label}
+            href={action.href}
+            className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
+          >
+            {action.label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}

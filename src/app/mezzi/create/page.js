@@ -5,16 +5,16 @@ import Link from "next/link";
 import styles from "../../../styles/form.module.css";
 
 const BRAND_MODELS = {
-  "Ford": ["Transit", "Transit Custom", "Transit Connect", "Transit Courier"], // gamma Transit [web:205]
-  "Fiat Professional": ["Ducato", "Doblò", "Scudo"], // Ducato molto diffuso [web:198]
+  Ford: ["Transit", "Transit Custom", "Transit Connect", "Transit Courier"],
+  "Fiat Professional": ["Ducato", "Doblò", "Scudo"],
   "Mercedes-Benz": ["Sprinter", "Vito", "Citan"],
-  "Renault": ["Master", "Trafic", "Kangoo"],
-  "Volkswagen": ["Crafter", "Transporter", "Caddy"],
-  "Iveco": ["Daily"], // Iveco Daily diffuso [web:206]
-  "Peugeot": ["Boxer", "Expert", "Partner"], // Boxer/Expert presenti in liste [web:203]
-  "Citroën": ["Jumper", "Jumpy", "Berlingo"], // Jumper/Jumpy presenti in liste [web:203]
-  "Opel": ["Movano", "Vivaro", "Combo"],
-  "Nissan": ["Interstar", "Primastar", "Townstar"], // modelli citati in cataloghi van [web:203]
+  Renault: ["Master", "Trafic", "Kangoo"],
+  Volkswagen: ["Crafter", "Transporter", "Caddy"],
+  Iveco: ["Daily"],
+  Peugeot: ["Boxer", "Expert", "Partner"],
+  "Citroën": ["Jumper", "Jumpy", "Berlingo"],
+  Opel: ["Movano", "Vivaro", "Combo"],
+  Nissan: ["Interstar", "Primastar", "Townstar"],
 };
 
 export default function CreateMezzoForm() {
@@ -29,7 +29,10 @@ export default function CreateMezzoForm() {
   const [message, setMessage] = useState("");
 
   const brandList = useMemo(() => Object.keys(BRAND_MODELS).sort(), []);
-  const modelList = useMemo(() => (marca ? BRAND_MODELS[marca] ?? [] : []), [marca]);
+  const modelList = useMemo(
+    () => (marca ? BRAND_MODELS[marca] ?? [] : []),
+    [marca]
+  );
 
   const resetForm = () => {
     setMarca("");
@@ -45,11 +48,11 @@ export default function CreateMezzoForm() {
     event.preventDefault();
     setMessage("");
 
-    // obbligatori
     if (!marca) {
       setMessage("Errore: Seleziona una marca.");
       return;
     }
+
     if (!modello) {
       setMessage("Errore: Seleziona un modello.");
       return;
@@ -96,14 +99,16 @@ export default function CreateMezzoForm() {
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
-            <h1 className={styles.heading}>Crea Nuovo Mezzo</h1>
+            <p className={styles.pageEyebrow}>Mezzi</p>
+            <h1 className={styles.heading}>Crea nuovo mezzo</h1>
             <p className={styles.subheading}>
-              Seleziona marca/modello e inserisci le scadenze principali.
+              Inserisci i dati principali del veicolo e imposta le scadenze
+              operative per revisione, assicurazione e tagliando.
             </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
@@ -112,7 +117,9 @@ export default function CreateMezzoForm() {
         {message && (
           <div
             className={
-              message.startsWith("Errore") ? styles.errorMessage : styles.successMessage
+              message.startsWith("Errore")
+                ? styles.errorMessage
+                : styles.successMessage
             }
           >
             {message}
@@ -124,7 +131,7 @@ export default function CreateMezzoForm() {
             <h2 className={styles.sectionTitle}>Dati mezzo</h2>
 
             <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="marca">Marca</label>
                 <select
                   id="marca"
@@ -132,7 +139,7 @@ export default function CreateMezzoForm() {
                   onChange={(e) => {
                     const nextBrand = e.target.value;
                     setMarca(nextBrand);
-                    setModello(""); // reset modello quando cambia marca
+                    setModello("");
                   }}
                   required
                 >
@@ -145,7 +152,7 @@ export default function CreateMezzoForm() {
                 </select>
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="modello">Modello</label>
                 <select
                   id="modello"
@@ -155,7 +162,9 @@ export default function CreateMezzoForm() {
                   disabled={!marca}
                   title={!marca ? "Seleziona prima una marca" : ""}
                 >
-                  <option value="">{marca ? "Seleziona modello" : "Seleziona prima la marca"}</option>
+                  <option value="">
+                    {marca ? "Seleziona modello" : "Seleziona prima la marca"}
+                  </option>
                   {modelList.map((m) => (
                     <option key={m} value={m}>
                       {m}
@@ -164,7 +173,7 @@ export default function CreateMezzoForm() {
                 </select>
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="anno">Anno</label>
                 <input
                   type="number"
@@ -184,7 +193,7 @@ export default function CreateMezzoForm() {
             <h2 className={styles.sectionTitle}>Scadenze</h2>
 
             <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="scadenzaRevisione">Scadenza revisione</label>
                 <input
                   type="date"
@@ -194,7 +203,7 @@ export default function CreateMezzoForm() {
                 />
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="scadenzaAssicurazione">Scadenza assicurazione</label>
                 <input
                   type="date"
@@ -204,7 +213,7 @@ export default function CreateMezzoForm() {
                 />
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="scadenzaTagliando">Scadenza tagliando</label>
                 <input
                   type="date"
@@ -217,16 +226,16 @@ export default function CreateMezzoForm() {
           </div>
 
           <div className={styles.formActions}>
-            <button type="submit" className={styles.primaryButton}>
-              Crea mezzo
-            </button>
-
             <button
               type="button"
               className={styles.secondaryButton}
               onClick={resetForm}
             >
               Annulla
+            </button>
+
+            <button type="submit" className={styles.primaryButton}>
+              Crea mezzo
             </button>
           </div>
         </form>

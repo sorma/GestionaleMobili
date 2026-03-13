@@ -37,7 +37,6 @@ export default function CreateMagazzinoForm() {
     return TIPI_PER_CATEGORIA[macroCategoria] ?? [];
   }, [macroCategoria]);
 
-  // Quando cambia la macro categoria, resetto il tipo pezzo selezionato
   useEffect(() => {
     setTipoPezzo("");
   }, [macroCategoria]);
@@ -83,14 +82,16 @@ export default function CreateMagazzinoForm() {
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
+            <p className={styles.pageEyebrow}>Magazzino</p>
             <h1 className={styles.heading}>Nuovo carico magazzino</h1>
             <p className={styles.subheading}>
-              Seleziona categoria e tipo pezzo, poi inserisci la quantità (unità: pz).
+              Seleziona categoria e tipo pezzo, inserisci la quantità e,
+              se necessario, collega il movimento a un lavoro o a un ordine.
             </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
@@ -113,7 +114,7 @@ export default function CreateMagazzinoForm() {
             <h2 className={styles.sectionTitle}>Selezione pezzo</h2>
 
             <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="macro_categoria">Macro categoria</label>
                 <select
                   id="macro_categoria"
@@ -121,13 +122,13 @@ export default function CreateMagazzinoForm() {
                   onChange={(e) => setMacroCategoria(e.target.value)}
                   required
                 >
-                  <option value="">Seleziona…</option>
+                  <option value="">Seleziona categoria</option>
                   <option value="armadio">Armadio</option>
                   <option value="cucina">Cucina</option>
                 </select>
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="tipo_pezzo">Tipo pezzo</label>
                 <select
                   id="tipo_pezzo"
@@ -137,7 +138,9 @@ export default function CreateMagazzinoForm() {
                   required
                 >
                   <option value="">
-                    {macroCategoria ? "Seleziona…" : "Prima scegli la categoria"}
+                    {macroCategoria
+                      ? "Seleziona tipo pezzo"
+                      : "Prima scegli la categoria"}
                   </option>
                   {tipiDisponibili.map((t) => (
                     <option key={t} value={t}>
@@ -146,10 +149,8 @@ export default function CreateMagazzinoForm() {
                   ))}
                 </select>
               </div>
-            </div>
 
-            <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="quantita">Quantità (pz)</label>
                 <input
                   id="quantita"
@@ -159,11 +160,14 @@ export default function CreateMagazzinoForm() {
                   value={quantita}
                   onChange={(e) => setQuantita(e.target.value)}
                   required
+                  placeholder="0"
                 />
               </div>
 
-              <div className={styles.formGroup}>
-                <label htmlFor="riferimento_lavoro">Riferimento lavoro (opzionale)</label>
+              <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
+                <label htmlFor="riferimento_lavoro">
+                  Riferimento lavoro (opzionale)
+                </label>
                 <input
                   id="riferimento_lavoro"
                   type="text"
@@ -176,16 +180,16 @@ export default function CreateMagazzinoForm() {
           </div>
 
           <div className={styles.formActions}>
-            <button type="submit" className={styles.primaryButton}>
-              Inserisci
-            </button>
-
             <button
               type="button"
               className={styles.secondaryButton}
               onClick={resetForm}
             >
               Annulla
+            </button>
+
+            <button type="submit" className={styles.primaryButton}>
+              Inserisci
             </button>
           </div>
         </form>

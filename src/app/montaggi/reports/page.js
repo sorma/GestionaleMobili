@@ -2,7 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import styles from "../../../styles/client-seller-magazine-report-list.module.css";
+import { BarChart3, TrendingUp, Users, Calendar } from "lucide-react";
+import styles from "../../../styles/reports.module.css";
 
 export default function MontaggiReportsPage() {
   const [reportType, setReportType] = useState("montaggi_by_seller");
@@ -52,7 +53,9 @@ export default function MontaggiReportsPage() {
   }, [reportType]);
 
   const formatCurrency = (value) =>
-    new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(value);
+    new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(
+      value
+    );
 
   const sellers = useMemo(() => {
     return reportData.reduce((acc, item) => {
@@ -88,6 +91,42 @@ export default function MontaggiReportsPage() {
     }, {});
   }, [reportData]);
 
+  const totalMontaggi = useMemo(() => {
+    if (reportType === "montaggi_by_seller") {
+      return Object.values(sellers).reduce(
+        (sum, s) => sum + s.total_montaggi,
+        0
+      );
+    } else if (reportType === "montaggi_by_client") {
+      return Object.values(clients).reduce(
+        (sum, c) => sum + c.total_montaggi,
+        0
+      );
+    } else {
+      return reportData.reduce((sum, item) => sum + item.total_montaggi, 0);
+    }
+  }, [reportType, sellers, clients, reportData]);
+
+  const totalProfit = useMemo(() => {
+    if (reportType === "montaggi_by_seller") {
+      return Object.values(sellers).reduce((sum, s) => sum + s.total_profit, 0);
+    } else if (reportType === "montaggi_by_client") {
+      return Object.values(clients).reduce((sum, c) => sum + c.total_profit, 0);
+    } else {
+      return reportData.reduce((sum, item) => sum + item.total_profit, 0);
+    }
+  }, [reportType, sellers, clients, reportData]);
+
+  const entitiesCount = useMemo(() => {
+    if (reportType === "montaggi_by_seller") {
+      return Object.keys(sellers).length;
+    } else if (reportType === "montaggi_by_client") {
+      return Object.keys(clients).length;
+    } else {
+      return reportData.length;
+    }
+  }, [reportType, sellers, clients, reportData]);
+
   async function loadSellerDetail(sellerId) {
     if (sellerDetails[sellerId]?.rows) return;
 
@@ -106,7 +145,11 @@ export default function MontaggiReportsPage() {
 
       setSellerDetails((prev) => ({
         ...prev,
-        [sellerId]: { loading: false, error: "", rows: Array.isArray(json) ? json : [] },
+        [sellerId]: {
+          loading: false,
+          error: "",
+          rows: Array.isArray(json) ? json : [],
+        },
       }));
     } catch (e) {
       setSellerDetails((prev) => ({
@@ -134,7 +177,11 @@ export default function MontaggiReportsPage() {
 
       setClientDetails((prev) => ({
         ...prev,
-        [clientId]: { loading: false, error: "", rows: Array.isArray(json) ? json : [] },
+        [clientId]: {
+          loading: false,
+          error: "",
+          rows: Array.isArray(json) ? json : [],
+        },
       }));
     } catch (e) {
       setClientDetails((prev) => ({
@@ -154,7 +201,9 @@ export default function MontaggiReportsPage() {
 
     try {
       const res = await fetch(
-        `/api/montaggi/reports?type=montaggi_detail_by_month&month=${encodeURIComponent(month)}`,
+        `/api/montaggi/reports?type=montaggi_detail_by_month&month=${encodeURIComponent(
+          month
+        )}`,
         { cache: "no-store" }
       );
       const json = await res.json().catch(() => null);
@@ -172,362 +221,480 @@ export default function MontaggiReportsPage() {
     }
   }
 
+  const getReportTitle = () => {
+    switch (reportType) {
+      case "montaggi_by_seller":
+        return "Montaggi per venditore";
+      case "montaggi_by_client":
+        return "Montaggi per cliente";
+      case "montaggi_over_time_monthly":
+        return "Andamento mensile";
+      default:
+        return "Report montaggi";
+    }
+  };
+
+  const getReportDescription = () => {
+    switch (reportType) {
+      case "montaggi_by_seller":
+        return "Analisi aggregata dei montaggi raggruppati per venditore con dettagli espandibili.";
+      case "montaggi_by_client":
+        return "Distribuzione dei montaggi per cliente con metriche di guadagno associate.";
+      case "montaggi_over_time_monthly":
+        return "Evoluzione temporale dei montaggi con aggregazione mensile e trend di guadagno.";
+      default:
+        return "";
+    }
+  };
+
   return (
     <main className={styles.page}>
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
+            <p className={styles.pageEyebrow}>Analytics</p>
             <h1 className={styles.heading}>Report Montaggi</h1>
-            <p className={styles.subheading}>Seleziona un report e consulta i risultati.</p>
+            <p className={styles.subheading}>
+              Analisi aggregata con drill-down su venditori, clienti e andamento temporale.
+            </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
 
       <section className={styles.content}>
-        <div className={styles.toolbar}>
-          <div className={styles.counter}>
-            {reportType === "montaggi_by_seller"
-              ? "Totale montaggi per venditore"
-              : reportType === "montaggi_by_client"
-              ? "Totale montaggi per cliente"
-              : "Andamento montaggi mensili"}
+        {message ? (
+          <div className={styles.stateBoxError}>{message}</div>
+        ) : null}
+
+        <div className={styles.overviewGrid}>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <BarChart3 size={18} />
+            </div>
+            <div>
+              <p className={styles.statLabel}>Totale montaggi</p>
+              <h3 className={styles.statValue}>{totalMontaggi}</h3>
+              <p className={styles.statMeta}>Aggregato dal report corrente</p>
+            </div>
           </div>
 
-          <div className={styles.toolbarActions}>
-            <select
-              value={reportType}
-              onChange={(e) => setReportType(e.target.value)}
-              style={{
-                padding: "0.6rem 0.75rem",
-                borderRadius: 10,
-                border: "1px solid #e2e8f0",
-                background: "#fff",
-                fontWeight: 700,
-                color: "#0f172a",
-              }}
-              aria-label="Seleziona report montaggi"
-            >
-              <option value="montaggi_by_seller">Totale Montaggi per Venditore</option>
-              <option value="montaggi_by_client">Totale Montaggi per Cliente</option>
-              <option value="montaggi_over_time_monthly">Andamento Montaggi Mensili</option>
-            </select>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <TrendingUp size={18} />
+            </div>
+            <div>
+              <p className={styles.statLabel}>Guadagno totale</p>
+              <h3 className={styles.statValue}>{formatCurrency(totalProfit)}</h3>
+              <p className={styles.statMeta}>Somma profitti registrati</p>
+            </div>
+          </div>
+
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              {reportType === "montaggi_over_time_monthly" ? (
+                <Calendar size={18} />
+              ) : (
+                <Users size={18} />
+              )}
+            </div>
+            <div>
+              <p className={styles.statLabel}>
+                {reportType === "montaggi_by_seller"
+                  ? "Venditori"
+                  : reportType === "montaggi_by_client"
+                  ? "Clienti"
+                  : "Periodi"}
+              </p>
+              <h3 className={styles.statValue}>{entitiesCount}</h3>
+              <p className={styles.statMeta}>
+                {reportType === "montaggi_over_time_monthly"
+                  ? "Mesi con attività"
+                  : "Entità registrate"}
+              </p>
+            </div>
           </div>
         </div>
 
         {loading ? (
           <div className={styles.stateBox}>Caricamento report…</div>
-        ) : message ? (
-          <div className={styles.stateBoxError}>{message}</div>
-        ) : reportType === "montaggi_by_seller" ? (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.colId}>ID</th>
-                  <th>Venditore</th>
-                  <th>Totale montaggi</th>
-                  <th>Guadagno totale</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {Object.values(sellers).map((s) => {
-                  const isOpen = openSellerId === s.id;
-                  const detail = sellerDetails[s.id];
-
-                  return (
-                    <React.Fragment key={s.id}>
-                      <tr
-                        style={{ cursor: s.total_montaggi > 1 ? "pointer" : "default" }}
-                        onClick={() => {
-                          if (s.total_montaggi > 1) {
-                            const next = isOpen ? null : s.id;
-                            setOpenSellerId(next);
-                            if (!isOpen) loadSellerDetail(s.id);
-                          }
-                        }}
-                        title={s.total_montaggi > 1 ? "Clicca per vedere i dettagli montaggi" : ""}
-                      >
-                        <td className={styles.mono}>{s.id}</td>
-                        <td>
-                          {s.name}{" "}
-                          {s.total_montaggi > 1 ? (
-                            <span style={{ opacity: 0.7, fontWeight: 700 }}>
-                              {isOpen ? "▾" : "▸"}
-                            </span>
-                          ) : null}
-                        </td>
-                        <td className={styles.mono}>{s.total_montaggi}</td>
-                        <td className={styles.mono}>{formatCurrency(s.total_profit)}</td>
-                      </tr>
-
-                      {s.total_montaggi > 1 && isOpen && (
-                        <tr>
-                          <td colSpan={4} style={{ padding: "0.75rem", backgroundColor: "var(--color-surface, #fafafa)" }}>
-                            {detail?.loading ? (
-                              <div className={styles.stateBox}>Caricamento dettagli…</div>
-                            ) : detail?.error ? (
-                              <div className={styles.stateBoxError}>
-                                Impossibile caricare i dettagli: {detail.error}
-                              </div>
-                            ) : (
-                              <table className={styles.table} style={{ marginTop: 8 }}>
-                                <thead>
-                                  <tr>
-                                    <th>ID</th>
-                                    <th>Data inizio stimata</th>
-                                    <th>Tipologia</th>
-                                    <th>Indirizzo</th>
-                                    <th>Giorni stimati</th>
-                                    <th>Guadagno</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {(detail?.rows ?? []).map((m) => (
-                                    <tr key={m.montaggio_id}>
-                                      <td className={styles.mono}>{m.montaggio_id}</td>
-                                      <td>{m.data_inizio_stimata}</td>
-                                      <td>{m.tipologia}</td>
-                                      <td>{m.indirizzo}</td>
-                                      <td className={styles.mono}>{m.giorni_lavorativi_stimati}</td>
-                                      <td className={styles.mono}>{formatCurrency(m.profit)}</td>
-                                    </tr>
-                                  ))}
-
-                                  {(detail?.rows ?? []).length === 0 && (
-                                    <tr>
-                                      <td colSpan={6} className={styles.stateBox}>
-                                        Nessun montaggio di dettaglio trovato.
-                                      </td>
-                                    </tr>
-                                  )}
-                                </tbody>
-                              </table>
-                            )}
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-
-                {Object.keys(sellers).length === 0 && (
-                  <tr>
-                    <td colSpan={4} className={styles.stateBox}>
-                      Nessun dato disponibile per i venditori.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        ) : reportType === "montaggi_by_client" ? (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.colId}>ID</th>
-                  <th>Cliente</th>
-                  <th>Totale montaggi</th>
-                  <th>Guadagno totale</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {Object.values(clients).map((c) => {
-                  const isOpen = openClientId === c.id;
-                  const detail = clientDetails[c.id];
-
-                  return (
-                    <React.Fragment key={c.id}>
-                      <tr
-                        style={{ cursor: c.total_montaggi > 1 ? "pointer" : "default" }}
-                        onClick={() => {
-                          if (c.total_montaggi > 1) {
-                            const next = isOpen ? null : c.id;
-                            setOpenClientId(next);
-                            if (!isOpen) loadClientDetail(c.id);
-                          }
-                        }}
-                        title={c.total_montaggi > 1 ? "Clicca per vedere i dettagli montaggi" : ""}
-                      >
-                        <td className={styles.mono}>{c.id}</td>
-                        <td>
-                          {c.name}{" "}
-                          {c.total_montaggi > 1 ? (
-                            <span style={{ opacity: 0.7, fontWeight: 700 }}>
-                              {isOpen ? "▾" : "▸"}
-                            </span>
-                          ) : null}
-                        </td>
-                        <td className={styles.mono}>{c.total_montaggi}</td>
-                        <td className={styles.mono}>{formatCurrency(c.total_profit)}</td>
-                      </tr>
-
-                      {c.total_montaggi > 1 && isOpen && (
-                        <tr>
-                          <td colSpan={4} style={{ padding: "0.75rem", backgroundColor: "var(--color-surface, #fafafa)" }}>
-                            {detail?.loading ? (
-                              <div className={styles.stateBox}>Caricamento dettagli…</div>
-                            ) : detail?.error ? (
-                              <div className={styles.stateBoxError}>
-                                Impossibile caricare i dettagli: {detail.error}
-                              </div>
-                            ) : (
-                              <table className={styles.table} style={{ marginTop: 8 }}>
-                                <thead>
-                                  <tr>
-                                    <th>ID</th>
-                                    <th>Data inizio stimata</th>
-                                    <th>Tipologia</th>
-                                    <th>Indirizzo</th>
-                                    <th>Giorni stimati</th>
-                                    <th>Guadagno</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {(detail?.rows ?? []).map((m) => (
-                                    <tr key={m.montaggio_id}>
-                                      <td className={styles.mono}>{m.montaggio_id}</td>
-                                      <td>{m.data_inizio_stimata}</td>
-                                      <td>{m.tipologia}</td>
-                                      <td>{m.indirizzo}</td>
-                                      <td className={styles.mono}>{m.giorni_lavorativi_stimati}</td>
-                                      <td className={styles.mono}>{formatCurrency(m.profit)}</td>
-                                    </tr>
-                                  ))}
-
-                                  {(detail?.rows ?? []).length === 0 && (
-                                    <tr>
-                                      <td colSpan={6} className={styles.stateBox}>
-                                        Nessun montaggio di dettaglio trovato.
-                                      </td>
-                                    </tr>
-                                  )}
-                                </tbody>
-                              </table>
-                            )}
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-
-                {Object.keys(clients).length === 0 && (
-                  <tr>
-                    <td colSpan={4} className={styles.stateBox}>
-                      Nessun dato disponibile per i clienti.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
         ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Mese</th>
-                  <th>Totale montaggi</th>
-                  <th>Guadagno totale</th>
-                </tr>
-              </thead>
+          <div className={styles.panel}>
+            <div className={styles.panelHeader}>
+              <div>
+                <h2 className={styles.panelTitle}>{getReportTitle()}</h2>
+                <p className={styles.panelSubtitle}>{getReportDescription()}</p>
+              </div>
 
-              <tbody>
-                {reportData.map((item, idx) => {
-                  const isOpen = openMonth === item.month;
-                  const detail = monthDetails[item.month];
+              <select
+                value={reportType}
+                onChange={(e) => setReportType(e.target.value)}
+                className={styles.reportSelector}
+                aria-label="Seleziona tipo di report"
+              >
+                <option value="montaggi_by_seller">Per Venditore</option>
+                <option value="montaggi_by_client">Per Cliente</option>
+                <option value="montaggi_over_time_monthly">
+                  Andamento Mensile
+                </option>
+              </select>
+            </div>
 
-                  return (
-                    <React.Fragment key={`${item.month}-${idx}`}>
-                      <tr
-                        style={{ cursor: item.total_montaggi > 1 ? "pointer" : "default" }}
-                        onClick={() => {
-                          if (item.total_montaggi > 1) {
-                            const next = isOpen ? null : item.month;
-                            setOpenMonth(next);
-                            if (!isOpen) loadMonthDetail(item.month);
-                          }
-                        }}
-                        title={item.total_montaggi > 1 ? "Clicca per vedere i dettagli montaggi" : ""}
-                      >
-                        <td>
-                          {item.month}{" "}
-                          {item.total_montaggi > 1 ? (
-                            <span style={{ opacity: 0.7, fontWeight: 700 }}>
-                              {isOpen ? "▾" : "▸"}
-                            </span>
-                          ) : null}
+            {reportType === "montaggi_by_seller" ? (
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th className={styles.colId}>ID</th>
+                      <th>Venditore</th>
+                      <th>Totale montaggi</th>
+                      <th>Guadagno totale</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {Object.values(sellers).map((s) => {
+                      const isOpen = openSellerId === s.id;
+                      const detail = sellerDetails[s.id];
+
+                      return (
+                        <React.Fragment key={s.id}>
+                          <tr
+                            className={
+                              s.total_montaggi > 1 ? styles.expandableRow : ""
+                            }
+                            onClick={() => {
+                              if (s.total_montaggi > 1) {
+                                const next = isOpen ? null : s.id;
+                                setOpenSellerId(next);
+                                if (!isOpen) loadSellerDetail(s.id);
+                              }
+                            }}
+                            title={
+                              s.total_montaggi > 1
+                                ? "Clicca per espandere i dettagli"
+                                : ""
+                            }
+                          >
+                            <td className={styles.mono}>{s.id}</td>
+                            <td>
+                              <div className={styles.cellPrimary}>{s.name}</div>
+                              {s.total_montaggi > 1 && (
+                                <span
+                                  className={`${styles.expandIcon} ${
+                                    isOpen ? styles.expandIconOpen : ""
+                                  }`}
+                                >
+                                  ▸
+                                </span>
+                              )}
+                            </td>
+                            <td className={styles.mono}>{s.total_montaggi}</td>
+                            <td className={styles.mono}>
+                              {formatCurrency(s.total_profit)}
+                            </td>
+                          </tr>
+
+                          {s.total_montaggi > 1 && isOpen && (
+                            <tr className={styles.detailRow}>
+                              <td colSpan={4} className={styles.detailCell}>
+                                {detail?.loading ? (
+                                  <div className={styles.stateBox}>
+                                    Caricamento dettagli…
+                                  </div>
+                                ) : detail?.error ? (
+                                  <div className={styles.stateBoxError}>
+                                    Errore: {detail.error}
+                                  </div>
+                                ) : (
+                                  <table className={styles.detailTable}>
+                                    <thead>
+                                      <tr>
+                                        <th>ID</th>
+                                        <th>Data inizio</th>
+                                        <th>Tipologia</th>
+                                        <th>Indirizzo</th>
+                                        <th>Giorni</th>
+                                        <th>Guadagno</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {(detail?.rows ?? []).map((m) => (
+                                        <tr key={m.montaggio_id}>
+                                          <td className={styles.mono}>
+                                            {m.montaggio_id}
+                                          </td>
+                                          <td>{m.data_inizio_stimata}</td>
+                                          <td>{m.tipologia}</td>
+                                          <td className={styles.cellWrap}>
+                                            {m.indirizzo}
+                                          </td>
+                                          <td className={styles.mono}>
+                                            {m.giorni_lavorativi_stimati}
+                                          </td>
+                                          <td className={styles.mono}>
+                                            {formatCurrency(m.profit)}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+
+                    {Object.keys(sellers).length === 0 && (
+                      <tr>
+                        <td colSpan={4} className={styles.stateBox}>
+                          Nessun dato disponibile
                         </td>
-                        <td className={styles.mono}>{item.total_montaggi}</td>
-                        <td className={styles.mono}>{formatCurrency(item.total_profit)}</td>
                       </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : reportType === "montaggi_by_client" ? (
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th className={styles.colId}>ID</th>
+                      <th>Cliente</th>
+                      <th>Totale montaggi</th>
+                      <th>Guadagno totale</th>
+                    </tr>
+                  </thead>
 
-                      {item.total_montaggi > 1 && isOpen && (
-                        <tr>
-                          <td colSpan={3} style={{ padding: "0.75rem", backgroundColor: "var(--color-surface, #fafafa)" }}>
-                            {detail?.loading ? (
-                              <div className={styles.stateBox}>Caricamento dettagli…</div>
-                            ) : detail?.error ? (
-                              <div className={styles.stateBoxError}>
-                                Impossibile caricare i dettagli: {detail.error}
+                  <tbody>
+                    {Object.values(clients).map((c) => {
+                      const isOpen = openClientId === c.id;
+                      const detail = clientDetails[c.id];
+
+                      return (
+                        <React.Fragment key={c.id}>
+                          <tr
+                            className={
+                              c.total_montaggi > 1 ? styles.expandableRow : ""
+                            }
+                            onClick={() => {
+                              if (c.total_montaggi > 1) {
+                                const next = isOpen ? null : c.id;
+                                setOpenClientId(next);
+                                if (!isOpen) loadClientDetail(c.id);
+                              }
+                            }}
+                            title={
+                              c.total_montaggi > 1
+                                ? "Clicca per espandere i dettagli"
+                                : ""
+                            }
+                          >
+                            <td className={styles.mono}>{c.id}</td>
+                            <td>
+                              <div className={styles.cellPrimary}>{c.name}</div>
+                              {c.total_montaggi > 1 && (
+                                <span
+                                  className={`${styles.expandIcon} ${
+                                    isOpen ? styles.expandIconOpen : ""
+                                  }`}
+                                >
+                                  ▸
+                                </span>
+                              )}
+                            </td>
+                            <td className={styles.mono}>{c.total_montaggi}</td>
+                            <td className={styles.mono}>
+                              {formatCurrency(c.total_profit)}
+                            </td>
+                          </tr>
+
+                          {c.total_montaggi > 1 && isOpen && (
+                            <tr className={styles.detailRow}>
+                              <td colSpan={4} className={styles.detailCell}>
+                                {detail?.loading ? (
+                                  <div className={styles.stateBox}>
+                                    Caricamento dettagli…
+                                  </div>
+                                ) : detail?.error ? (
+                                  <div className={styles.stateBoxError}>
+                                    Errore: {detail.error}
+                                  </div>
+                                ) : (
+                                  <table className={styles.detailTable}>
+                                    <thead>
+                                      <tr>
+                                        <th>ID</th>
+                                        <th>Data inizio</th>
+                                        <th>Tipologia</th>
+                                        <th>Indirizzo</th>
+                                        <th>Giorni</th>
+                                        <th>Guadagno</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {(detail?.rows ?? []).map((m) => (
+                                        <tr key={m.montaggio_id}>
+                                          <td className={styles.mono}>
+                                            {m.montaggio_id}
+                                          </td>
+                                          <td>{m.data_inizio_stimata}</td>
+                                          <td>{m.tipologia}</td>
+                                          <td className={styles.cellWrap}>
+                                            {m.indirizzo}
+                                          </td>
+                                          <td className={styles.mono}>
+                                            {m.giorni_lavorativi_stimati}
+                                          </td>
+                                          <td className={styles.mono}>
+                                            {formatCurrency(m.profit)}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+
+                    {Object.keys(clients).length === 0 && (
+                      <tr>
+                        <td colSpan={4} className={styles.stateBox}>
+                          Nessun dato disponibile
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Mese</th>
+                      <th>Totale montaggi</th>
+                      <th>Guadagno totale</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {reportData.map((item, idx) => {
+                      const isOpen = openMonth === item.month;
+                      const detail = monthDetails[item.month];
+
+                      return (
+                        <React.Fragment key={`${item.month}-${idx}`}>
+                          <tr
+                            className={
+                              item.total_montaggi > 1 ? styles.expandableRow : ""
+                            }
+                            onClick={() => {
+                              if (item.total_montaggi > 1) {
+                                const next = isOpen ? null : item.month;
+                                setOpenMonth(next);
+                                if (!isOpen) loadMonthDetail(item.month);
+                              }
+                            }}
+                            title={
+                              item.total_montaggi > 1
+                                ? "Clicca per espandere i dettagli"
+                                : ""
+                            }
+                          >
+                            <td>
+                              <div className={styles.cellPrimary}>
+                                {item.month}
                               </div>
-                            ) : (
-                              <table className={styles.table} style={{ marginTop: 8 }}>
-                                <thead>
-                                  <tr>
-                                    <th>ID</th>
-                                    <th>Data inizio stimata</th>
-                                    <th>Tipologia</th>
-                                    <th>Indirizzo</th>
-                                    <th>Giorni stimati</th>
-                                    <th>Guadagno</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {(detail?.rows ?? []).map((m) => (
-                                    <tr key={m.montaggio_id}>
-                                      <td className={styles.mono}>{m.montaggio_id}</td>
-                                      <td>{m.data_inizio_stimata}</td>
-                                      <td>{m.tipologia}</td>
-                                      <td>{m.indirizzo}</td>
-                                      <td className={styles.mono}>{m.giorni_lavorativi_stimati}</td>
-                                      <td className={styles.mono}>{formatCurrency(m.profit)}</td>
-                                    </tr>
-                                  ))}
+                              {item.total_montaggi > 1 && (
+                                <span
+                                  className={`${styles.expandIcon} ${
+                                    isOpen ? styles.expandIconOpen : ""
+                                  }`}
+                                >
+                                  ▸
+                                </span>
+                              )}
+                            </td>
+                            <td className={styles.mono}>{item.total_montaggi}</td>
+                            <td className={styles.mono}>
+                              {formatCurrency(item.total_profit)}
+                            </td>
+                          </tr>
 
-                                  {(detail?.rows ?? []).length === 0 && (
-                                    <tr>
-                                      <td colSpan={6} className={styles.stateBox}>
-                                        Nessun montaggio di dettaglio trovato.
-                                      </td>
-                                    </tr>
-                                  )}
-                                </tbody>
-                              </table>
-                            )}
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
+                          {item.total_montaggi > 1 && isOpen && (
+                            <tr className={styles.detailRow}>
+                              <td colSpan={3} className={styles.detailCell}>
+                                {detail?.loading ? (
+                                  <div className={styles.stateBox}>
+                                    Caricamento dettagli…
+                                  </div>
+                                ) : detail?.error ? (
+                                  <div className={styles.stateBoxError}>
+                                    Errore: {detail.error}
+                                  </div>
+                                ) : (
+                                  <table className={styles.detailTable}>
+                                    <thead>
+                                      <tr>
+                                        <th>ID</th>
+                                        <th>Data inizio</th>
+                                        <th>Tipologia</th>
+                                        <th>Indirizzo</th>
+                                        <th>Giorni</th>
+                                        <th>Guadagno</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {(detail?.rows ?? []).map((m) => (
+                                        <tr key={m.montaggio_id}>
+                                          <td className={styles.mono}>
+                                            {m.montaggio_id}
+                                          </td>
+                                          <td>{m.data_inizio_stimata}</td>
+                                          <td>{m.tipologia}</td>
+                                          <td className={styles.cellWrap}>
+                                            {m.indirizzo}
+                                          </td>
+                                          <td className={styles.mono}>
+                                            {m.giorni_lavorativi_stimati}
+                                          </td>
+                                          <td className={styles.mono}>
+                                            {formatCurrency(m.profit)}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
 
-                {reportData.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className={styles.stateBox}>
-                      Nessun dato disponibile per l’andamento mensile dei montaggi.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                    {reportData.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className={styles.stateBox}>
+                          Nessun dato disponibile
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </section>

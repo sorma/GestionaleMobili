@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FaLock, FaSignInAlt } from "react-icons/fa";
 import styles from "../../styles/login.module.css";
 
 export default function LoginPage() {
@@ -37,97 +38,92 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="appBg">
-      {/* Sfondo come Home (global CSS) */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="appBg__image" />
-        <div className="appBg__overlay" />
-        <div className="appBg__gradient" />
-      </div>
+    <main className={styles.page}>
+      <div className={styles.shell}>
+        <aside className={styles.brandPanel}>
+          <div className={styles.brandTop}>
+            <span className={styles.brandIcon}>
+              <FaLock />
+            </span>
+            <span className={styles.brandEyebrow}>Gestionale</span>
+          </div>
 
-      <div className="appBg__content relative mx-auto max-w-7xl px-4 py-10 md:px-12">
-        {/* HEADER identico alla Home */}
-        <header className="relative z-10 -mx-4 md:-mx-12 mb-10 border-b border-slate-200/90 bg-white/75 backdrop-blur-md">
-          <div className="mx-auto max-w-7xl px-4 py-6 md:px-12">
-            <div>
-              <div className="inline-flex items-center gap-3 text-slate-700">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white/80 backdrop-blur">
-                  {/* “pallino” come logo minimal */}
-                  <span
-                    aria-hidden="true"
-                    className="h-2.5 w-2.5 rounded bg-gradient-to-br from-indigo-600 to-sky-500 shadow-[0_0_0_4px_rgba(79,70,229,0.10)]"
-                  />
-                </span>
-                <span className="text-sm font-medium tracking-wide uppercase">
-                  Gestionale
-                </span>
-              </div>
+          <h1 className={styles.brandTitle}>Arredamenti Sormani</h1>
 
-              <h1 className="mt-3 text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
-                Accesso
-              </h1>
+          <p className={styles.brandText}>
+            Accesso all’area riservata per la gestione operativa di ordini,
+            clienti, appuntamenti, montaggi e controllo aziendale.
+          </p>
 
-              <p className="mt-2 max-w-2xl text-base text-slate-600">
-                Inserisci le credenziali per accedere al gestionale.
-              </p>
+          <div className={styles.brandMeta}>
+            <div className={styles.metaRow}>
+              <span className={styles.metaLabel}>Ambiente</span>
+              <span className={styles.metaValue}>Pannello amministrativo</span>
+            </div>
+            <div className={styles.metaRow}>
+              <span className={styles.metaLabel}>Accesso</span>
+              <span className={styles.metaValue}>Credenziali riservate</span>
+            </div>
+            <div className={styles.metaRow}>
+              <span className={styles.metaLabel}>Sicurezza</span>
+              <span className={styles.metaValue}>Sessione protetta</span>
             </div>
           </div>
-        </header>
+        </aside>
 
-        {/* FORM */}
-        <section className={styles.content}>
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h2 className={styles.cardTitle}>Login</h2>
-              <p className={styles.cardHint}>
-                Usa le credenziali configurate in <code>.env.local</code>.
-              </p>
+        <section className={styles.formPanel}>
+          <div className={styles.formHeader}>
+            <p className={styles.formEyebrow}>Accesso</p>
+            <h2 className={styles.formTitle}>Accedi al gestionale</h2>
+            <p className={styles.formSubtitle}>
+              Inserisci le credenziali per continuare.
+            </p>
+          </div>
+
+          <form onSubmit={onSubmit} className={styles.form}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="username">
+                Username
+              </label>
+              <input
+                id="username"
+                className={styles.input}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                required
+                placeholder="Inserisci username"
+              />
             </div>
 
-            <form onSubmit={onSubmit} className={styles.form}>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="username">
-                  Username
-                </label>
-                <input
-                  id="username"
-                  className={styles.input}
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  required
-                  placeholder="Inserisci username"
-                />
-              </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="password">
+                Password
+              </label>
+              <input
+                id="password"
+                className={styles.input}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+                placeholder="Inserisci password"
+              />
+            </div>
 
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="password">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  className={styles.input}
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                  placeholder="Inserisci password"
-                />
-              </div>
+            {error ? <div className={styles.errorBox}>{error}</div> : null}
 
-              {error ? <div className={styles.errorBox}>{error}</div> : null}
+            <button className={styles.submit} type="submit" disabled={loading}>
+              <FaSignInAlt />
+              <span>{loading ? "Accesso in corso..." : "Accedi"}</span>
+            </button>
 
-              <button className={styles.submit} type="submit" disabled={loading}>
-                {loading ? "Accesso in corso…" : "Accedi"}
-              </button>
-
-              <div className={styles.footerNote}>
-                <span className={styles.lockDot} aria-hidden="true" />
-                Sessione protetta tramite cookie httpOnly.
-              </div>
-            </form>
-          </div>
+            <div className={styles.footerNote}>
+              <span className={styles.lockDot} aria-hidden="true" />
+              Sessione autenticata tramite cookie httpOnly.
+            </div>
+          </form>
         </section>
       </div>
     </main>

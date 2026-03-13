@@ -21,7 +21,6 @@ export default function CreateMontaggioForm() {
     useState(false);
   const [isClienteSelectDisabled, setIsClienteSelectDisabled] = useState(true);
 
-  // Fetch venditori + clienti
   useEffect(() => {
     let active = true;
 
@@ -82,7 +81,6 @@ export default function CreateMontaggioForm() {
     return clienti.find((c) => Number(c?._id ?? c?.id) === id) ?? null;
   }, [clienteSelezionato, clienti]);
 
-  // Logica Sormani: abilita cliente e precompila indirizzo
   useEffect(() => {
     const isSormani =
       selectedVenditore &&
@@ -106,7 +104,6 @@ export default function CreateMontaggioForm() {
       return;
     }
 
-    // Non Sormani
     setIsClienteSelectDisabled(true);
     setClienteSelezionato("");
     setIndirizzo("");
@@ -194,14 +191,16 @@ export default function CreateMontaggioForm() {
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
-            <h1 className={styles.heading}>Crea Nuovo Montaggio</h1>
+            <p className={styles.pageEyebrow}>Montaggi</p>
+            <h1 className={styles.heading}>Crea nuovo montaggio</h1>
             <p className={styles.subheading}>
-              Assegna venditore/cliente e inserisci i dettagli dell’intervento.
+              Assegna venditore e cliente, definisci l’intervento e completa i
+              dati economici e operativi del montaggio.
             </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
@@ -224,7 +223,7 @@ export default function CreateMontaggioForm() {
             <h2 className={styles.sectionTitle}>Assegnazione</h2>
 
             <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="venditore">Venditore</label>
                 <select
                   id="venditore"
@@ -244,7 +243,7 @@ export default function CreateMontaggioForm() {
                 </select>
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="cliente">Cliente</label>
                 <select
                   id="cliente"
@@ -253,7 +252,11 @@ export default function CreateMontaggioForm() {
                   required={!isClienteSelectDisabled}
                   disabled={isClienteSelectDisabled}
                 >
-                  <option value="">Seleziona un cliente</option>
+                  <option value="">
+                    {isClienteSelectDisabled
+                      ? "Abilitato solo per venditori Sormani"
+                      : "Seleziona un cliente"}
+                  </option>
                   {clienti.map((cliente) => (
                     <option
                       key={cliente._id || cliente.id}
@@ -270,23 +273,26 @@ export default function CreateMontaggioForm() {
           <div className={styles.formSection}>
             <h2 className={styles.sectionTitle}>Dettagli montaggio</h2>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="indirizzo">Indirizzo del montaggio</label>
-              <input
-                type="text"
-                id="indirizzo"
-                value={indirizzo}
-                onChange={(e) => {
-                  if (!indirizzoShouldBePrepopulated) setIndirizzo(e.target.value);
-                }}
-                required
-                placeholder="Via Roma 1, Milano"
-                readOnly={indirizzoShouldBePrepopulated}
-              />
-            </div>
-
             <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
+                <label htmlFor="indirizzo">Indirizzo del montaggio</label>
+                {indirizzoShouldBePrepopulated ? (
+                  <div className={styles.readOnlyField} id="indirizzo">
+                    {indirizzo || "Seleziona un cliente per compilare l’indirizzo"}
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    id="indirizzo"
+                    value={indirizzo}
+                    onChange={(e) => setIndirizzo(e.target.value)}
+                    required
+                    placeholder="Via Roma 1, Milano"
+                  />
+                )}
+              </div>
+
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="tipologia">Tipologia</label>
                 <select
                   id="tipologia"
@@ -302,7 +308,7 @@ export default function CreateMontaggioForm() {
                 </select>
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="importo">Importo montaggio (€)</label>
                 <div className={styles.currencyInput}>
                   <span>€</span>
@@ -329,7 +335,7 @@ export default function CreateMontaggioForm() {
                 </div>
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="giorniLavorativiStimati">
                   Giorni lavorativi stimati
                 </label>
@@ -355,7 +361,7 @@ export default function CreateMontaggioForm() {
                 />
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="dataInizioStimata">Data inizio stimata</label>
                 <input
                   type="date"
@@ -368,15 +374,16 @@ export default function CreateMontaggioForm() {
           </div>
 
           <div className={styles.formActions}>
-            <button type="submit" className={styles.primaryButton}>
-              Crea montaggio
-            </button>
             <button
               type="button"
               className={styles.secondaryButton}
               onClick={resetForm}
             >
               Annulla
+            </button>
+
+            <button type="submit" className={styles.primaryButton}>
+              Crea montaggio
             </button>
           </div>
         </form>

@@ -51,10 +51,12 @@ export default function CreateCostoForm() {
       setMessage("Errore: Seleziona una tipologia.");
       return;
     }
+
     if (!data) {
       setMessage("Errore: Seleziona una data.");
       return;
     }
+
     if (Number.isNaN(prezzoNumber) || prezzoNumber <= 0) {
       setMessage("Errore: Inserisci un prezzo valido (> 0).");
       return;
@@ -66,7 +68,7 @@ export default function CreateCostoForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tipologia,
-          data, // YYYY-MM-DD [web:193]
+          data,
           prezzo: prezzoNumber,
         }),
       });
@@ -88,12 +90,16 @@ export default function CreateCostoForm() {
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
-            <h1 className={styles.heading}>Inserisci Nuovo Costo</h1>
-            <p className={styles.subheading}>Compila tipologia, data e prezzo.</p>
+            <p className={styles.pageEyebrow}>Costi</p>
+            <h1 className={styles.heading}>Inserisci nuovo costo</h1>
+            <p className={styles.subheading}>
+              Registra una nuova voce di costo indicando tipologia, data e
+              importo, così da mantenere il controllo economico aggiornato.
+            </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
@@ -102,7 +108,9 @@ export default function CreateCostoForm() {
         {message && (
           <div
             className={
-              message.startsWith("Errore") ? styles.errorMessage : styles.successMessage
+              message.startsWith("Errore")
+                ? styles.errorMessage
+                : styles.successMessage
             }
           >
             {message}
@@ -114,7 +122,7 @@ export default function CreateCostoForm() {
             <h2 className={styles.sectionTitle}>Dati costo</h2>
 
             <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="tipologia">Tipologia</label>
                 <select
                   id="tipologia"
@@ -131,7 +139,7 @@ export default function CreateCostoForm() {
                 </select>
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="data">Data</label>
                 <input
                   id="data"
@@ -142,32 +150,35 @@ export default function CreateCostoForm() {
                 />
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupQuarter}`}>
                 <label htmlFor="prezzo">Prezzo (€)</label>
-                <input
-                  id="prezzo"
-                  type="text"
-                  value={prezzo}
-                  onChange={(e) => setPrezzo(e.target.value)}
-                  inputMode="decimal"
-                  placeholder="Es. 120,50"
-                  required
-                />
+                <div className={styles.currencyInput}>
+                  <span>€</span>
+                  <input
+                    id="prezzo"
+                    type="text"
+                    value={prezzo}
+                    onChange={(e) => setPrezzo(e.target.value)}
+                    inputMode="decimal"
+                    placeholder="Es. 120,50"
+                    required
+                  />
+                </div>
               </div>
             </div>
           </div>
 
           <div className={styles.formActions}>
-            <button type="submit" className={styles.primaryButton}>
-              Inserisci costo
-            </button>
-
             <button
               type="button"
               className={styles.secondaryButton}
               onClick={resetForm}
             >
               Annulla
+            </button>
+
+            <button type="submit" className={styles.primaryButton}>
+              Inserisci costo
             </button>
           </div>
         </form>

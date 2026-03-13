@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
+import { Package, TrendingUp, Archive, Layers } from "lucide-react";
 import styles from "../../styles/client-seller-magazine-report-list.module.css";
 
 export default function MagazzinoPage() {
@@ -14,14 +15,16 @@ export default function MagazzinoPage() {
   const [qty, setQty] = useState("1");
   const [modalError, setModalError] = useState("");
   const [busy, setBusy] = useState(false);
-
-  // "scarico" | "carico"
   const [modalMode, setModalMode] = useState("scarico");
 
-  const disponibili = useMemo(() => Number(selectedRow?.quantita) || 0, [selectedRow]);
+  const disponibili = useMemo(
+    () => Number(selectedRow?.quantita) || 0,
+    [selectedRow]
+  );
 
   const load = async () => {
     setError("");
+
     const res = await fetch("/api/magazzino", { cache: "no-store" });
     const data = await res.json().catch(() => null);
 
@@ -40,7 +43,7 @@ export default function MagazzinoPage() {
 
   const openModal = (r, mode) => {
     setSelectedRow(r);
-    setModalMode(mode); // "scarico" oppure "carico"
+    setModalMode(mode);
     setQty("1");
     setModalError("");
     setModalOpen(true);
@@ -93,7 +96,9 @@ export default function MagazzinoPage() {
       }
 
       if (data?.row) {
-        setRows((prev) => prev.map((x) => (x.id === selectedRow.id ? data.row : x)));
+        setRows((prev) =>
+          prev.map((x) => (x.id === selectedRow.id ? data.row : x))
+        );
         closeModal();
         return;
       }
@@ -105,6 +110,26 @@ export default function MagazzinoPage() {
     }
   };
 
+  const totalePezzi = useMemo(() => {
+    return rows.reduce((sum, r) => sum + (Number(r.quantita) || 0), 0);
+  }, [rows]);
+
+  const categorie = useMemo(() => {
+    const set = new Set();
+    rows.forEach((r) => {
+      if (r.macro_categoria) set.add(r.macro_categoria);
+    });
+    return set.size;
+  }, [rows]);
+
+  const tipologie = useMemo(() => {
+    const set = new Set();
+    rows.forEach((r) => {
+      if (r.tipo_pezzo) set.add(r.tipo_pezzo);
+    });
+    return set.size;
+  }, [rows]);
+
   const modalTitle = modalMode === "carico" ? "Aggiungi pezzi" : "Scarica pezzi";
   const modalVerb = modalMode === "carico" ? "aggiungendo" : "scaricando";
   const confirmLabel = modalMode === "carico" ? "Aggiungi" : "Conferma";
@@ -114,12 +139,16 @@ export default function MagazzinoPage() {
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
-            <h1 className={styles.heading}>Magazzino</h1>
-            <p className={styles.subheading}>Visualizza e gestisci i pezzi in magazzino.</p>
+            <p className={styles.pageEyebrow}>Magazzino</p>
+            <h1 className={styles.heading}>Gestione inventario</h1>
+            <p className={styles.subheading}>
+              Monitora giacenze, movimenta stock e gestisci categorie di prodotto
+              con operazioni di carico e scarico in tempo reale.
+            </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
@@ -127,77 +156,143 @@ export default function MagazzinoPage() {
       <section className={styles.content}>
         {error ? <div className={styles.stateBoxError}>{error}</div> : null}
 
-        <div className={styles.toolbar}>
-          <div className={styles.counter}>Totale: {rows.length}</div>
+        <div className={styles.overviewGrid}>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <Package size={18} />
+            </div>
+            <div>
+              <p className={styles.statLabel}>Pezzi totali</p>
+              <h3 className={styles.statValue}>{totalePezzi}</h3>
+              <p className={styles.statMeta}>
+                Quantità complessiva in giacenza
+              </p>
+            </div>
+          </div>
 
-          <div className={styles.toolbarActions}>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <Archive size={18} />
+            </div>
+            <div>
+              <p className={styles.statLabel}>Righe inventario</p>
+              <h3 className={styles.statValue}>{rows.length}</h3>
+              <p className={styles.statMeta}>Voci registrate nel magazzino</p>
+            </div>
+          </div>
+
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <Layers size={18} />
+            </div>
+            <div>
+              <p className={styles.statLabel}>Categorie / Tipologie</p>
+              <h3 className={styles.statValue}>
+                {categorie} / {tipologie}
+              </h3>
+              <p className={styles.statMeta}>
+                Macro categorie e tipi di pezzo distinti
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.ctaCard}>
             <Link href="/magazzino/create" className={styles.primaryLink}>
               + Nuovo pezzo
             </Link>
           </div>
         </div>
 
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.colId}>ID</th>
-                <th>Macro categoria</th>
-                <th>Tipo pezzo</th>
-                <th>Quantità</th>
-                <th>Unità</th>
-                <th>Rif. lavoro</th>
-                <th>Data</th>
-                <th className={styles.colActions}>Azioni</th>
-              </tr>
-            </thead>
+        {rows.length > 0 ? (
+          <div className={styles.panel}>
+            <div className={styles.panelHeader}>
+              <div>
+                <h2 className={styles.panelTitle}>Inventario completo</h2>
+                <p className={styles.panelSubtitle}>
+                  Vista operativa con giacenze, categorie, riferimenti lavoro e
+                  operazioni di movimentazione stock.
+                </p>
+              </div>
+            </div>
 
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id}>
-                  <td className={styles.mono}>{r.id}</td>
-                  <td>{r.macro_categoria || "-"}</td>
-                  <td>{r.tipo_pezzo || "-"}</td>
-                  <td className={styles.mono}>{r.quantita}</td>
-                  <td>{r.unita || "pz"}</td>
-                  <td>{r.riferimento_lavoro || "-"}</td>
-                  <td className={styles.mono}>{r.data_inserimento}</td>
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th className={styles.colId}>ID</th>
+                    <th>Categoria / Tipo</th>
+                    <th>Giacenza</th>
+                    <th>Rif. lavoro</th>
+                    <th>Data inserimento</th>
+                    <th className={styles.colActions}>Azioni</th>
+                  </tr>
+                </thead>
 
-                  <td className={styles.colActions}>
-                    <div className={styles.actions}>
-                      <button
-                        type="button"
-                        className={`${styles.actionBtn} ${styles.actionBtnAdd}`}
-                        onClick={() => openModal(r, "carico")}
-                        title="Aggiungi quantità alla riga esistente"
-                      >
-                        Aggiungi
-                      </button>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.id}>
+                      <td className={styles.mono}>{r.id}</td>
 
-                      <button
-                        type="button"
-                        className={`${styles.actionBtn} ${styles.actionBtnRemove}`}
-                        onClick={() => openModal(r, "scarico")}
-                        disabled={(Number(r.quantita) || 0) <= 0}
-                        title="Scarica pezzi"
-                      >
-                        Scarica
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      <td>
+                        <div className={styles.cellPrimary}>
+                          {r.macro_categoria || "-"}
+                        </div>
+                        <div className={styles.cellSecondary}>
+                          {r.tipo_pezzo || "Tipo non specificato"}
+                        </div>
+                      </td>
 
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan={8} className={styles.stateBox}>
-                    Nessun pezzo in magazzino.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                      <td>
+                        <div className={styles.cellPrimary}>
+                          {r.quantita} {r.unita || "pz"}
+                        </div>
+                      </td>
+
+                      <td>
+                        <span className={styles.contactPill}>
+                          {r.riferimento_lavoro || "-"}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span className={styles.contactPill}>
+                          {r.data_inserimento}
+                        </span>
+                      </td>
+
+                      <td className={styles.actionsCell}>
+                        <div className={styles.actions}>
+                          <button
+                            type="button"
+                            className={`${styles.actionBtn} ${styles.actionBtnAdd}`}
+                            onClick={() => openModal(r, "carico")}
+                            title="Aggiungi quantità alla riga esistente"
+                          >
+                            Aggiungi
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`${styles.actionBtn} ${styles.actionBtnRemove}`}
+                            onClick={() => openModal(r, "scarico")}
+                            disabled={(Number(r.quantita) || 0) <= 0}
+                            title="Scarica pezzi"
+                          >
+                            Scarica
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.stateBox}>
+            <p>Nessun pezzo in magazzino.</p>
+          </div>
+        )}
       </section>
 
       {modalOpen && selectedRow ? (
@@ -207,7 +302,10 @@ export default function MagazzinoPage() {
           role="dialog"
           aria-modal="true"
         >
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={styles.modalCard}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>{modalTitle}</h3>
             </div>

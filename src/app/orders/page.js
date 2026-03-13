@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
-import styles from "../../styles/order-montaggi-list.module.css";
+import { Trash2, ShoppingCart, Euro, Package, TrendingUp } from "lucide-react";
+import styles from "../../styles/client-seller-magazine-report-list.module.css";
 
 export default function OrderList() {
   const [orders, setOrders] = useState([]);
@@ -11,8 +11,8 @@ export default function OrderList() {
   const [error, setError] = useState(null);
 
   const [sortDate, setSortDate] = useState("none");
-  const [sortPrice, setSortPrice] = useState("none"); // totale
-  const [sortPreventivo, setSortPreventivo] = useState("none"); // nuovo
+  const [sortPrice, setSortPrice] = useState("none");
+  const [sortPreventivo, setSortPreventivo] = useState("none");
   const [sortColli, setSortColli] = useState("none");
 
   const [filterStatus, setFilterStatus] = useState("tutti");
@@ -23,8 +23,13 @@ export default function OrderList() {
     try {
       setLoading(true);
       setError(null);
+
       const response = await fetch("/api/orders", { cache: "no-store" });
-      if (!response.ok) throw new Error(`Errore HTTP! status: ${response.status}`);
+
+      if (!response.ok) {
+        throw new Error(`Errore HTTP! status: ${response.status}`);
+      }
+
       const data = await response.json();
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -63,7 +68,9 @@ export default function OrderList() {
       }
 
       setOrders((prev) =>
-        prev.map((order) => (order.id === id ? { ...order, stato: newStatus } : order))
+        prev.map((order) =>
+          order.id === id ? { ...order, stato: newStatus } : order
+        )
       );
     } catch (err) {
       console.error("Errore nel cambio stato:", err);
@@ -72,10 +79,14 @@ export default function OrderList() {
   };
 
   const handleDeleteOrder = async (id) => {
+    const conferma = window.confirm(`Vuoi davvero eliminare l'ordine #${id}?`);
+    if (!conferma) return;
+
     try {
       setError(null);
 
       const response = await fetch(`/api/orders/${id}`, { method: "DELETE" });
+
       if (!response.ok) {
         let data = null;
         try {
@@ -136,7 +147,9 @@ export default function OrderList() {
     let filtered = [...orders];
 
     if (filterStatus !== "tutti") {
-      filtered = filtered.filter((o) => o.stato.toLowerCase() === filterStatus.toLowerCase());
+      filtered = filtered.filter(
+        (o) => o.stato.toLowerCase() === filterStatus.toLowerCase()
+      );
     }
 
     if (filterSeller !== "tutti") {
@@ -212,41 +225,110 @@ export default function OrderList() {
   }, [orders]);
 
   const getSortButtonClass = (state) => {
-    switch (state) {
-      case "asc":
-        return `${styles.sortButton} ${styles.sortAsc}`;
-      case "desc":
-        return `${styles.sortButton} ${styles.sortDesc}`;
-      case "none":
-      default:
-        return `${styles.sortButton} ${styles.sortNone}`;
-    }
+    const base = styles.secondaryButton;
+    if (state === "none") return base;
+    return `${base} ${styles.sortActive}`;
   };
 
   const total = filteredAndSortedOrders.length;
+
+  const totaleCosto = useMemo(() => {
+    return filteredAndSortedOrders.reduce(
+      (sum, o) => sum + Number(o.costo || 0),
+      0
+    );
+  }, [filteredAndSortedOrders]);
+
+  const totalePreventivo = useMemo(() => {
+    return filteredAndSortedOrders.reduce(
+      (sum, o) => sum + Number(o.preventivo || 0),
+      0
+    );
+  }, [filteredAndSortedOrders]);
+
+  const consegnatiCount = useMemo(() => {
+    return orders.filter((o) => o.stato.toLowerCase() === "consegnato").length;
+  }, [orders]);
+
+  const inLavorazioneCount = useMemo(() => {
+    return orders.filter((o) => o.stato.toLowerCase() === "in lavorazione")
+      .length;
+  }, [orders]);
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat("it-IT", {
+      style: "currency",
+      currency: "EUR",
+    }).format(value);
+  };
 
   return (
     <main className={styles.page}>
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
-            <h1 className={styles.heading}>Elenco Ordini</h1>
-            <p className={styles.subheading}>Filtra, ordina e aggiorna lo stato degli ordini.</p>
+            <p className={styles.pageEyebrow}>Ordini</p>
+            <h1 className={styles.heading}>Gestione ordini</h1>
+            <p className={styles.subheading}>
+              Monitora ordini attivi e consegnati, gestisci stati, filtra per
+              venditore, cliente e criterio economico.
+            </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
 
       <section className={styles.content}>
-        <div className={styles.toolbar}>
-          <div className={styles.counter}>
-            Risultati: <strong>{total}</strong>
+        {error ? (
+          <div className={styles.stateBoxError}>
+            <p>Errore: {error}</p>
+          </div>
+        ) : null}
+
+        <div className={styles.overviewGrid}>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <ShoppingCart size={18} />
+            </div>
+            <div>
+              <p className={styles.statLabel}>Ordini totali</p>
+              <h3 className={styles.statValue}>{total}</h3>
+              <p className={styles.statMeta}>
+                {inLavorazioneCount} in lavorazione, {consegnatiCount} consegnati
+              </p>
+            </div>
           </div>
 
-          <div className={styles.toolbarActions}>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <Euro size={18} />
+            </div>
+            <div>
+              <p className={styles.statLabel}>Valore costi</p>
+              <h3 className={styles.statValue}>
+                {formatCurrency(totaleCosto)}
+              </h3>
+              <p className={styles.statMeta}>Somma costi ordini filtrati</p>
+            </div>
+          </div>
+
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <TrendingUp size={18} />
+            </div>
+            <div>
+              <p className={styles.statLabel}>Valore preventivi</p>
+              <h3 className={styles.statValue}>
+                {formatCurrency(totalePreventivo)}
+              </h3>
+              <p className={styles.statMeta}>Somma preventivi ordini filtrati</p>
+            </div>
+          </div>
+
+          <div className={styles.ctaCard}>
             <Link href="/orders/create" className={styles.primaryLink}>
               + Nuovo ordine
             </Link>
@@ -257,14 +339,87 @@ export default function OrderList() {
           <div className={styles.stateBox}>
             <p>Caricamento ordini...</p>
           </div>
-        ) : error ? (
-          <div className={styles.stateBoxError}>
-            <p>Errore: {error}</p>
-          </div>
         ) : (
-          <>
-            <div className={styles.filtersContainer}>
-              <div className={styles.sortButtons}>
+          <div className={styles.panel}>
+            <div className={styles.panelHeader}>
+              <div>
+                <h2 className={styles.panelTitle}>Filtri e ordinamento</h2>
+                <p className={styles.panelSubtitle}>
+                  Affina per stato, venditore, cliente. Ordina per data, costi,
+                  preventivo o colli.
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.filtersRow}>
+              <div className={styles.filterGroup}>
+                <label htmlFor="filterStatus">Stato</label>
+                <select
+                  id="filterStatus"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className={styles.filterSelect}
+                >
+                  <option value="tutti">Tutti gli stati</option>
+                  <option value="in lavorazione">In Lavorazione</option>
+                  <option value="consegnato">Consegnato</option>
+                </select>
+              </div>
+
+              <div className={styles.filterGroup}>
+                <label htmlFor="filterSeller">Venditore</label>
+                <select
+                  id="filterSeller"
+                  value={filterSeller}
+                  onChange={(e) => setFilterSeller(e.target.value)}
+                  className={styles.filterSelect}
+                >
+                  <option value="tutti">Tutti i venditori</option>
+                  {sellersList.map((seller) => (
+                    <option key={seller} value={seller}>
+                      {seller}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.filterGroup}>
+                <label htmlFor="filterClient">Cliente</label>
+                <select
+                  id="filterClient"
+                  value={filterClient}
+                  onChange={(e) => setFilterClient(e.target.value)}
+                  className={styles.filterSelect}
+                >
+                  <option value="tutti">Tutti i clienti</option>
+                  {clientsList.map((client) => (
+                    <option key={client} value={client}>
+                      {client}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: "1rem 1.2rem",
+                borderBottom: "1px solid #eef2f7",
+                background: "rgba(248, 250, 252, 0.5)",
+              }}
+            >
+              <div style={{ marginBottom: "0.5rem" }}>
+                <label
+                  style={{
+                    fontSize: "0.88rem",
+                    fontWeight: "700",
+                    color: "#0f172a",
+                  }}
+                >
+                  Ordinamento
+                </label>
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
                 <button
                   type="button"
                   onClick={handleDateClick}
@@ -280,7 +435,8 @@ export default function OrderList() {
                   className={getSortButtonClass(sortPrice)}
                   aria-pressed={sortPrice !== "none"}
                 >
-                  Costo {sortPrice === "asc" ? "↑" : sortPrice === "desc" ? "↓" : "—"}
+                  Costo{" "}
+                  {sortPrice === "asc" ? "↑" : sortPrice === "desc" ? "↓" : "—"}
                 </button>
 
                 <button
@@ -290,7 +446,11 @@ export default function OrderList() {
                   aria-pressed={sortPreventivo !== "none"}
                 >
                   Preventivo{" "}
-                  {sortPreventivo === "asc" ? "↑" : sortPreventivo === "desc" ? "↓" : "—"}
+                  {sortPreventivo === "asc"
+                    ? "↑"
+                    : sortPreventivo === "desc"
+                    ? "↓"
+                    : "—"}
                 </button>
 
                 <button
@@ -299,55 +459,9 @@ export default function OrderList() {
                   className={getSortButtonClass(sortColli)}
                   aria-pressed={sortColli !== "none"}
                 >
-                  Colli {sortColli === "asc" ? "↑" : sortColli === "desc" ? "↓" : "—"}
+                  Colli{" "}
+                  {sortColli === "asc" ? "↑" : sortColli === "desc" ? "↓" : "—"}
                 </button>
-              </div>
-
-              <div className={styles.filterSelects}>
-                <div className={styles.filterGroup}>
-                  <label htmlFor="filterStatus">Stato</label>
-                  <select
-                    id="filterStatus"
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                  >
-                    <option value="tutti">Tutti</option>
-                    <option value="in lavorazione">In Lavorazione</option>
-                    <option value="consegnato">Consegnato</option>
-                  </select>
-                </div>
-
-                <div className={styles.filterGroup}>
-                  <label htmlFor="filterSeller">Venditore</label>
-                  <select
-                    id="filterSeller"
-                    value={filterSeller}
-                    onChange={(e) => setFilterSeller(e.target.value)}
-                  >
-                    <option value="tutti">Tutti</option>
-                    {sellersList.map((seller) => (
-                      <option key={seller} value={seller}>
-                        {seller}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className={styles.filterGroup}>
-                  <label htmlFor="filterClient">Cliente</label>
-                  <select
-                    id="filterClient"
-                    value={filterClient}
-                    onChange={(e) => setFilterClient(e.target.value)}
-                  >
-                    <option value="tutti">Tutti</option>
-                    {clientsList.map((client) => (
-                      <option key={client} value={client}>
-                        {client}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
             </div>
 
@@ -359,13 +473,13 @@ export default function OrderList() {
                       <th className={styles.colId}>ID</th>
                       <th>Venditore</th>
                       <th>Cliente</th>
-                      <th className={styles.colDate}>Data</th>
-                      <th className={styles.colMoney}>Costo (€)</th>
-                      <th className={styles.colMoney}>Preventivo (€)</th>
-                      <th className={styles.colSmall}>Colli</th>
+                      <th>Data</th>
+                      <th>Costo</th>
+                      <th>Preventivo</th>
+                      <th>Colli</th>
                       <th>Destinazione</th>
                       <th>Disegno</th>
-                      <th className={styles.colStatus}>Stato</th>
+                      <th>Stato</th>
                       <th className={styles.colActions}>Azioni</th>
                     </tr>
                   </thead>
@@ -373,70 +487,104 @@ export default function OrderList() {
                   <tbody>
                     {filteredAndSortedOrders.map((order) => (
                       <tr key={order.id}>
-                        <td className={`${styles.mono} ${styles.nowrap}`}>{order.id}</td>
+                        <td className={styles.mono}>{order.id}</td>
 
-                        <td className={styles.cellWrap}>
-                          {order.venditore_nome} {order.venditore_cognome}
+                        <td>
+                          <div className={styles.cellPrimary}>
+                            {order.venditore_nome} {order.venditore_cognome}
+                          </div>
                         </td>
 
-                        <td className={styles.cellWrap}>
-                          {order.cliente_nome} {order.cliente_cognome}
+                        <td>
+                          <div className={styles.cellPrimary}>
+                            {order.cliente_nome} {order.cliente_cognome}
+                          </div>
                         </td>
 
-                        <td className={`${styles.mono} ${styles.nowrap}`}>{order.data_ordine}</td>
-
-                        <td className={`${styles.mono} ${styles.nowrap}`}>{order.costo}</td>
-
-                        <td className={`${styles.mono} ${styles.nowrap}`}>
-                          {order.preventivo ?? "-"}
+                        <td>
+                          <span className={styles.contactPill}>
+                            {order.data_ordine}
+                          </span>
                         </td>
 
-                        <td className={`${styles.mono} ${styles.nowrap}`}>{order.numero_colli}</td>
+                        <td>
+                          <div className={styles.cellPrimary}>
+                            {formatCurrency(Number(order.costo || 0))}
+                          </div>
+                        </td>
 
-                        <td className={styles.cellWrap} title={order.destinazione || ""}>
+                        <td>
+                          <div className={styles.cellPrimary}>
+                            {order.preventivo
+                              ? formatCurrency(Number(order.preventivo))
+                              : "-"}
+                          </div>
+                        </td>
+
+                        <td>
+                          <div className={styles.cellPrimary}>
+                            {order.numero_colli}
+                          </div>
+                        </td>
+
+                        <td
+                          className={styles.cellWrap}
+                          title={order.destinazione || ""}
+                        >
                           {order.destinazione}
                         </td>
 
-                        {/* Disegno: ORA apre una nuova pagina fullscreen */}
-                        <td className={styles.nowrap}>
+                        <td>
                           {order.disegno_path ? (
                             <a
-                              href={`/orders/disegno?src=${encodeURIComponent(order.disegno_path)}&cliente=${encodeURIComponent(`${order.cliente_nome} ${order.cliente_cognome}`)}`}
+                              href={`/orders/disegno?src=${encodeURIComponent(
+                                order.disegno_path
+                              )}&cliente=${encodeURIComponent(
+                                `${order.cliente_nome} ${order.cliente_cognome}`
+                              )}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className={styles.primaryLink}
+                              className={styles.secondaryButton}
+                              style={{
+                                fontSize: "0.85rem",
+                                padding: "0.5rem 0.75rem",
+                              }}
                               title="Apri disegno in una nuova scheda"
                             >
                               Vedi
                             </a>
                           ) : (
-                            <span className={styles.mono}>—</span>
+                            <span style={{ color: "#94a3b8" }}>—</span>
                           )}
                         </td>
 
-
-                        <td className={styles.nowrap}>
+                        <td>
                           <button
                             type="button"
-                            onClick={() => toggleDeliveryStatus(order.id, order.stato)}
-                            className={styles.statusButton}
-                            data-status={order.stato.toLowerCase()}
+                            onClick={() =>
+                              toggleDeliveryStatus(order.id, order.stato)
+                            }
+                            className={`${styles.statusBadge} ${
+                              order.stato.toLowerCase() === "consegnato"
+                                ? styles.statusFuture
+                                : styles.statusToday
+                            }`}
                             title="Clicca per cambiare stato"
                           >
                             {order.stato}
                           </button>
                         </td>
 
-                        <td>
+                        <td className={styles.actionsCell}>
                           <div className={styles.actions}>
                             <button
                               type="button"
                               onClick={() => handleDeleteOrder(order.id)}
-                              className={styles.deleteButton}
+                              className={styles.iconDangerButton}
                               aria-label={`Elimina ordine ${order.id}`}
-                              title="Elimina"
+                              title="Elimina ordine"
                             >
-                              <Trash2 size={18} />
+                              <Trash2 size={17} />
                             </button>
                           </div>
                         </td>
@@ -446,11 +594,11 @@ export default function OrderList() {
                 </table>
               </div>
             ) : (
-              <div className={styles.stateBox}>
+              <div className={styles.stateBox} style={{ marginTop: "1rem" }}>
                 <p>Nessun ordine trovato con i filtri selezionati</p>
               </div>
             )}
-          </>
+          </div>
         )}
       </section>
     </main>

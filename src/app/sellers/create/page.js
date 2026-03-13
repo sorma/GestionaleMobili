@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import styles from "../../../styles/form.module.css";
 import ReactCountryFlag from "react-country-flag";
+import styles from "../../../styles/form.module.css";
 
 const prefissiEuropei = [
   { label: "Italia (+39)", value: "+39", code: "IT", nazione: "Italia" },
@@ -63,7 +63,7 @@ export default function CreateSellerForm() {
     setMessage("");
 
     if (erroreNumero) {
-      setMessage("Correggi gli errori nel form.");
+      setMessage("Errore: Correggi gli errori nel form.");
       return;
     }
 
@@ -76,9 +76,9 @@ export default function CreateSellerForm() {
         body: JSON.stringify({
           nome,
           cognome,
-          telefono: numeroDaSalvare, // solo numero
+          telefono: numeroDaSalvare,
           nazione: nazioneSelezionata,
-          prefisso: prefissoSelezionato, // prefisso separato
+          prefisso: prefissoSelezionato,
         }),
       });
 
@@ -101,14 +101,15 @@ export default function CreateSellerForm() {
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div>
-            <h1 className={styles.heading}>Crea Nuovo Venditore</h1>
+            <p className={styles.pageEyebrow}>Venditori</p>
+            <h1 className={styles.heading}>Crea nuovo venditore</h1>
             <p className={styles.subheading}>
-              Inserisci i dati anagrafici e i contatti del venditore.
+              Inserisci i dati anagrafici e il contatto telefonico del venditore.
             </p>
           </div>
 
           <Link href="/" className={styles.backButton}>
-            ← Torna alla Home
+            ← Torna alla dashboard
           </Link>
         </div>
       </header>
@@ -131,7 +132,7 @@ export default function CreateSellerForm() {
             <h2 className={styles.sectionTitle}>Informazioni personali</h2>
 
             <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="nome">Nome</label>
                 <input
                   type="text"
@@ -142,7 +143,7 @@ export default function CreateSellerForm() {
                 />
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.formGroupThird}`}>
                 <label htmlFor="cognome">Cognome</label>
                 <input
                   type="text"
@@ -158,68 +159,81 @@ export default function CreateSellerForm() {
           <div className={styles.formSection}>
             <h2 className={styles.sectionTitle}>Contatti</h2>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="telefono">Numero di telefono</label>
+            <div className={styles.formGrid}>
+              <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
+                <label>Numero di telefono</label>
 
-              {/* Layout migliorato: prefisso e numero non "attaccati" */}
-              <div className={styles.phoneField}>
-                <div className={styles.phonePrefixBlock}>
-                  <div className={styles.phonePrefixLabel}>Prefisso</div>
-
-                  <div className={styles.phonePrefix}>
-                    <ReactCountryFlag
-                      countryCode={getFlagCode(prefissoSelezionato)}
-                      svg
-                      style={{ width: "1.35em", height: "1.35em" }}
-                      title={nazioneSelezionata}
-                    />
-
-                    <select
-                      value={prefissoSelezionato}
-                      onChange={handlePrefissoChange}
-                      aria-label="Prefisso internazionale"
-                    >
-                      {prefissiEuropei.map((prefisso) => (
-                        <option key={prefisso.value} value={prefisso.value}>
-                          {prefisso.value}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div style={{ marginTop: "0.75rem" }}>
+                  <label htmlFor="prefisso" style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600 }}>
+                    Prefisso
+                  </label>
+                  <select
+                    id="prefisso"
+                    value={prefissoSelezionato}
+                    onChange={handlePrefissoChange}
+                  >
+                    {prefissiEuropei.map((prefisso) => (
+                      <option key={prefisso.value} value={prefisso.value}>
+                        {prefisso.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                <div className={styles.phoneNumberBlock}>
-                  <div className={styles.phonePrefixLabel}>Numero</div>
-
+                <div style={{ marginTop: "1rem" }}>
+                  <label htmlFor="telefono" style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600 }}>
+                    Numero
+                  </label>
                   <input
                     id="telefono"
                     type="text"
                     value={numeroTelefono}
                     onChange={handleNumeroTelefonoChange}
-                    placeholder="Numero"
-                    className={styles.phoneNumberInput}
+                    placeholder="Inserisci il numero"
                     inputMode="tel"
+                    required
                   />
                 </div>
-              </div>
 
-              {erroreNumero && (
-                <p className={styles.inputError}>{erroreNumero}</p>
-              )}
+                <div
+                  style={{
+                    marginTop: "0.75rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    color: "#64748b",
+                    fontWeight: 600,
+                  }}
+                >
+                  <ReactCountryFlag
+                    countryCode={getFlagCode(prefissoSelezionato)}
+                    svg
+                    style={{ width: "1.2em", height: "1.2em" }}
+                    title={nazioneSelezionata}
+                  />
+                  <span>{nazioneSelezionata}</span>
+                </div>
+
+                {erroreNumero && (
+                  <p className={styles.inputError} style={{ marginTop: "0.75rem" }}>
+                    {erroreNumero}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
           <div className={styles.formActions}>
-            <button type="submit" className={styles.primaryButton}>
-              Crea venditore
-            </button>
-
             <button
               type="button"
               className={styles.secondaryButton}
               onClick={resetForm}
             >
               Annulla
+            </button>
+
+            <button type="submit" className={styles.primaryButton}>
+              Crea venditore
             </button>
           </div>
         </form>
